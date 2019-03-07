@@ -1,0 +1,29 @@
+{
+  "name": "as3",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Blue Bike movement visualization for MIT 6.894 Assignment 3",
+  "scripts": {
+    "serve": "webpack-dev-server --open",
+    "build": "webpack",
+    "lint": "eslint src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.mit.edu/6894-sp19/Life-of-a-Blue-Bike"
+  },
+  "author": "Anelise Newman & Barry McNamara",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "babel-loader": "^8.0.5",
+    "eslint": "^5.15.1",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3",
+    "webpack-dev-server": "^3.2.1"
+  },
+  "dependencies": {
+    "d3": "^5.9.1"
+  }
+}
