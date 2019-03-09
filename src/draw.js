@@ -60,3 +60,16 @@ export function drawGeoCoords(points, projection, svg) {
     )
     .attr('fill', 'lightblue');
 }
+
+export function drawSizedGeoCoords(points, projection, svg) {
+  svg.selectAll('circle')
+    .data(points, d => d.id)
+    .join('circle')
+    .transition()
+    .attr('r', d => (d.size ** .5) / 2)
+    .attr(
+      'transform',
+      d => `translate(${projection([d.longitude, d.latitude])})`,
+    )
+    .attr('fill', 'lightblue');
+}
