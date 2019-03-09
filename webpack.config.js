@@ -15,6 +15,9 @@ const config = {
       },
     ],
   },
+  devServer: {
+    publicPath: '/dist/'
+  }
 };
 
 module.exports = config;
