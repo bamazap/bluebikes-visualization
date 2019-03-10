@@ -95,25 +95,15 @@ export function bikeLocationsAtTime(dataByID, time) {
  * @return {Promise<Stations>}
  */
 export async function getStationData() {
-  const stations = {};
-  const rawData = await d3.csv('/data/20190201-bluebikes-tripdata.csv');
-  rawData.forEach((datum) => {
-    ['start', 'end'].forEach((point) => {
-      const stationID = datum[`${point} station id`];
-      if (!stations[stationID]) {
-        const latitude = parseFloat(datum[`${point} station latitude`]);
-        const longitude = parseFloat(datum[`${point} station longitude`]);
-        stations[stationID] = {
-          latitude,
-          longitude,
-          deltas: []
-        };
-      }
-      const time = new Date(datum[`${point === 'end' ? 'stop' : 'start'}time`]);
-      stations[stationID].deltas.push({ delta: point === 'end' ? 1 : -1, time});
-    });
-  });
-  return stations;
+  const data = await d3.json('/data/station-size-deltas.json');
+  for (let datum of Object.values(data)) {
+    for (let delta of datum.deltas) {
+      delta.time = new Date(delta.time);
+    }
+  }
+  console.log(Math.max(...Object.values(data).map(d => d.maxNumBikes)));
+  debugger;
+  return data;
 }
 
 /**
@@ -125,43 +115,44 @@ export async function getStationData() {
  */
 
 /**
- * @param {Stations} stations 
+ * @param {Station} station
  * @param {Date} time 
- * @return {TimeStation[]}
  */
-function stationSizeAtTime(stations, time) {
-  const stationsAtTime = [];
-  Object.entries(stations).forEach(([stationID, stationData]) => {
-    const stationDataAtTime = Object.assign({}, stationData);
-    delete stationDataAtTime.deltas;
-    stationDataAtTime.id = stationID;
-
-    stationDataAtTime.size = stationData.deltas
-      .filter(({ time: t }) => t < time)
-      .reduce((size, { delta }) => size + delta, 0);
-
-    stationsAtTime.push(stationDataAtTime);
-  });
-  return stationsAtTime;
+function stationBikeCountAtTime(station, time) {
+  if (!('size' in station)) {
+    station.numBikes = station.startNumBikes
+  }
+  station.numBikes = station.deltas
+    .filter(({ time: t }) => t < time)
+    .reduce((numBikes, { delta }) => numBikes + delta, station.numBikes);
+  station.deltas = station.deltas
+    .filter(({ time: t }) => t >= time)
 }
 
-export function stationSizeForTimeRange(stations, minTime, maxTime, timeStepMsec) {
-  const data = [];
+export function bikeCountsAtTime(stations, time) {
+  return Object.entries(stations).map(([id, station]) => {
+    stationBikeCountAtTime(station, time);
+    return {
+      id,
+      latitude: station.latitude,
+      longitude: station.longitude,
+      size: station.numBikes / station.maxNumBikes
+    };
+  });
+}
+
+const setTimeoutPromise = t => new Promise(resolve => setTimeout(resolve, t));
+
+export async function bikeCountsOverTime(
+  stations,
+  minTime,
+  maxTime,
+  timeStepMsec,
+  callback,
+  delay
+) {
   for (let t = minTime; t < maxTime; t = new Date(t.getTime() + timeStepMsec)) {
-    data.push(stationSizeAtTime(stations, t));
+    callback(bikeCountsAtTime(stations, t));
+    await setTimeoutPromise(delay);
   }
-  for (let i = 0; i < data[0].length; i += 1) {
-    const stationData = data.map(stationsAtTime => stationsAtTime[i]);
-    const minSize = stationData
-      .reduce((ms, { size }) => Math.min(ms, size), Infinity);
-    if (minSize < 0) {
-      stationData.forEach(d => d.size += -1 * minSize);
-    }
-  }
-  // const minSize = data.flat()
-  //   .reduce((ms, { size }) => Math.min(ms, size), Infinity);
-  // if (minSize < 0) {
-  //   data.flat().forEach(d => d.size += -1 * minSize);
-  // }
-  return data;
 }

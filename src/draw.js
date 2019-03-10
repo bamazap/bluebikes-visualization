@@ -61,15 +61,16 @@ export function drawGeoCoords(points, projection, svg) {
     .attr('fill', 'lightblue');
 }
 
-export function drawSizedGeoCoords(points, projection, svg) {
+export function drawSizedGeoCoords(points, projection, svg, d) {
   svg.selectAll('circle')
     .data(points, d => d.id)
     .join('circle')
     .transition()
-    .attr('r', d => (d.size ** .5) / 2)
+    .duration(d)
+    .attr('r', d => (d.size ** .5) * 5)
     .attr(
       'transform',
       d => `translate(${projection([d.longitude, d.latitude])})`,
     )
-    .attr('fill', 'lightblue');
+    .attr('fill', d => d3.interpolateViridis(d.size));
 }
