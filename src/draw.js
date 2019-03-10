@@ -7,8 +7,11 @@ import * as d3 from 'd3';
  * @return {d3.GeoPath} projection function so you can draw on top of it
  */
 export function drawMap(geojson, svg) {
-  const width = parseInt(svg.style('width'), 10);
-  const height = parseInt(svg.style('height'), 10);
+  const scalingFactor = 2;
+  const width = 700*scalingFactor;
+  const height = 680*scalingFactor;
+
+  svg.attr('width', width).attr('height', height);
 
   // Append empty placeholder g element to the SVG
   // g will contain geometry elements
@@ -17,7 +20,8 @@ export function drawMap(geojson, svg) {
   // Width and Height of the whole visualization
   // Set Projection Parameters
   const albersProjection = d3.geoAlbers()
-    .scale(190000)
+    .scale(190000*scalingFactor)
+    //.scale(300000)
     .rotate([71.057, 0])
     .center([0, 42.313])
     .translate([width / 2, height / 2]);

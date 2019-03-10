@@ -8,8 +8,8 @@ import { drawMap, drawGeoCoords } from './draw';
 async function main() {
   const svg = d3.select('body')
     .append('svg')
-    .attr('width', 700)
-    .attr('height', 680);
+    // .attr('width', 700)
+    // .attr('height', 680);
 
   const [projection, bbData] = await Promise.all([
     getMapData().then(mapJSON => drawMap(mapJSON, svg)),
