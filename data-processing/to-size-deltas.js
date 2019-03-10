@@ -18,8 +18,8 @@ tripDataRows.forEach((datum) => {
         deltas: []
       };
     }
-    const time = new Date(datum[`${point === 'end' ? 'stop' : 'start'}time`]);
-    stations[stationID].deltas.push({ delta: point === 'end' ? 1 : -1, time});
+    const date = new Date(datum[`${point === 'end' ? 'stop' : 'start'}time`]);
+    stations[stationID].deltas.push({ delta: point === 'end' ? 1 : -1, date});
   });
 });
 Object.values(stations).forEach((stationData) => {

@@ -44,33 +44,50 @@ export function drawMap(geojson, svg) {
 
 /**
  * Draws points on the map
- * @param {IDStop[]} points - points to draw
+ * @param {GeoCoord[]} points - points to draw
  * @param {d3.GeoPath} projection - projection function used to draw the map
  * @param {d3.Selection} svg - svg container to draw in
  */
-export function drawGeoCoords(points, projection, svg) {
-  svg.selectAll('circle')
-    .data(points, d => d.id)
-    .join('circle')
-    .transition()
-    .attr('r', 1)
-    .attr(
+export function drawBikes(points, projection, svg, transitionDuration) {
+  let circles = svg.selectAll('circle.bike')
+    .data(points, d => d.id);
+
+  const move = (sel) => sel.attr(
       'transform',
       d => `translate(${projection([d.longitude, d.latitude])})`,
-    )
-    .attr('fill', 'lightblue');
+    );
+
+  move(circles.merge(circles).transition()
+    .duration(transitionDuration));
+
+
+  move(circles = circles.enter().append('circle')
+    .attr('class', 'bike')
+    .attr('r', 1)
+    .attr('fill', 'rgb(173,216,230, .5)')); // a low-opacity lightblue
+    
+  circles.exit().remove()
 }
 
-export function drawSizedGeoCoords(points, projection, svg, d) {
-  svg.selectAll('circle')
+/**
+ * Draws points on the map
+ * @param {GeoCoord[]} points - points to draw
+ * @param {d3.GeoPath} projection - projection function used to draw the map
+ * @param {d3.Selection} svg - svg container to draw in
+ * @param {number} transitionDuration in msec
+ * @param {number} maxSize max size of any point ever
+ */
+export function drawStations(points, projection, svg, transitionDuration, maxSize) {
+  svg.selectAll('circle.station')
     .data(points, d => d.id)
     .join('circle')
-    .transition()
-    .duration(d)
-    .attr('r', d => (d.size ** .5) * 5)
+    .attr('class', 'station')
     .attr(
       'transform',
       d => `translate(${projection([d.longitude, d.latitude])})`,
     )
-    .attr('fill', d => d3.interpolateViridis(d.size));
+    .transition()
+    .duration(transitionDuration)
+    .attr('r', d => 2 + 5 * (d.size / maxSize) ** .5)
+    .attr('fill', d => d3.interpolateViridis(d.size / maxSize));
 }
