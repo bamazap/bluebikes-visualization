@@ -21,7 +21,7 @@ import * as d3 from 'd3';
  * @return {*} GeoJSON
  */
 export async function getMapData() {
-  return d3.json('data/Boston_Neighborhoods.geojson');
+  return d3.json('data/bostonmetro.geojson');
 }
 
 /**
