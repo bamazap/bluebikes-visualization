@@ -1,156 +1,123 @@
+import * as L from 'leaflet';
 import * as d3 from 'd3';
 
-/**
- * Draw a GeoJSON map
- * @param {*} geojson GEOJson data to draw
- * @param {d3.Selection} svg - svg container to draw in
- * @return {d3.GeoPath} projection function so you can draw on top of it
- */
-export function drawMap(geojson, svg) {
-  const scalingFactor = 2;
-  const width = 700*scalingFactor;
-  const height = 680*scalingFactor;
+const token = 'pk.eyJ1IjoiYmFtYXphcCIsImEiOiJjanQ0amR6dHIxM3YxNDlsbDJxZXFoaTEwIn0.HXt22ulQoeU3Xq1T7fSTRg';
 
-  svg.attr('width', width).attr('height', height);
+const baseZoom = 13;
+// create a map using Leaflet
+const map = L.map('map').setView([42.3601, -71.0589], baseZoom);
+L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}`, {
+  attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+  maxZoom: 18,
+  id: 'mapbox.streets',
+  token,
+}).addTo(map);
+// create an svg layer and get it with d3
+L.svg().addTo(map);
+const svg = d3.select('#map').select('svg').style('pointer-events', 'all');
+// create layers so we can have stations be in front of bikes
+const bikeLayer = svg.append("g").attr("class", "bike-layer");
+const stationLayer = svg.append("g").attr("class", "station-layer");
 
-  // Append empty placeholder g element to the SVG
-  // g will contain geometry elements
-  const g = svg.append('g');
-
-  // Width and Height of the whole visualization
-  // Set Projection Parameters
-  const albersProjection = d3.geoAlbers()
-    .scale(190000*scalingFactor)
-    //.scale(300000)
-    .rotate([71.057, 0])
-    .center([0, 42.313])
-    .translate([width / 2, height / 2]);
-
-  // Create GeoPath function that uses built-in D3 functionality to turn
-  // lat/lon coordinates into screen coordinates
-  const geoPath = d3.geoPath()
-    .projection(albersProjection);
-
-  const color = '#343332';
-  g.selectAll('path')
-    .data(geojson.features)
-    .enter()
-    .append('path')
-    .attr('fill', color)
-    .attr('stroke', color)
-    .attr('d', geoPath);
-
-  return albersProjection;
+// go from a latlng to pixel coordinates on the map
+function geoTranslate(d) {
+  const { x, y } = map.latLngToLayerPoint(d.latlng);
+  return `translate(${x}, ${y})`;
 }
 
-/**
- * Draws points on the map
- * @param {GeoCoord[]} points - points to draw
- * @param {d3.GeoPath} projection - projection function used to draw the map
- * @param {d3.Selection} svg - svg container to draw in
- */
-export function drawBikes(points, projection, svg, transitionDuration) {
-  let circles = svg.selectAll('circle.bike')
-    .data(points, d => d.id);
-
-  const move = (sel) => sel.attr(
-      'transform',
-      d => `translate(${projection([d.longitude, d.latitude])})`,
-    );
-
-  move(circles.merge(circles).transition()
-    .duration(transitionDuration));
-
-
-  move(circles = circles.enter().append('circle')
-    .attr('class', 'bike')
-    .attr('r', 1)
-    .attr('fill', 'rgb(173,216,230, .5)')); // a low-opacity lightblue
-    
-  circles.exit().remove()
+// go from a rather unitless size to a distance on the map
+function geoScale(r) {
+  return r * map.getZoomScale(map.getZoom(), baseZoom)
 }
 
+// go from rgb string to rgba string
+function rgba(rgb, a) {
+  return `${rgb.slice(0, -1)},${a})`;
+}
+
+// automatically position and size all circles created by drawCoordinates
+let lastZoom = map.getZoom();
+map.on('zoomend', () => {
+  const coordinateSelection = svg.selectAll('circle.coordinate');
+  coordinateSelection.attr('transform', geoTranslate);
+  const newZoom = map.getZoom();
+  if (lastZoom !== newZoom) {
+    const scale = map.getZoomScale(newZoom, lastZoom);
+    coordinateSelection.attr('r', function() {
+      return parseFloat(d3.select(this).attr('r')) * scale;
+    });
+    lastZoom = newZoom;
+  }
+});
+
 /**
- * Draws points on the map
- * @param {GeoCoord[]} points - points to draw
- * @param {d3.GeoPath} projection - projection function used to draw the map
- * @param {d3.Selection} svg - svg container to draw in
- * @param {number} transitionDuration in msec
- * @param {number} maxNumBikes max size of any point ever
+ * Draw coordinates on the map
+ * @param {{ id, latitiude: number, longitude: number}[]} coordinates 
+ * @param {d3.Selection} layer - svg to draw in
+ * @param {string} cls - class to add (needed to have separate coordinate sets) 
+ * @param {number} transitionDuration - msec movement animation should take
  */
-export function drawNumBikesStations(points, projection, svg, transitionDuration, maxNumBikes) {
+function drawCoordinates(coordinates, layer, cls='c', transitionDuration=750) {
+  coordinates.forEach((coord) => {
+    coord.latlng = new L.LatLng(coord.latitude, coord.longitude);
+  });
+
+  const coordinateSelection = layer.selectAll(`circle.coordinate.${cls}`)
+    .data(coordinates, d => d.id);
+
+  coordinateSelection.merge(coordinateSelection)
+    .transition()
+    .duration(transitionDuration)
+    .attr('transform', geoTranslate);
+  
+  coordinateSelection.enter().append('circle')
+    .attr('class', `coordinate ${cls}`)
+    .attr('transform', geoTranslate);
+
+  coordinateSelection.exit().remove();
+
+  return coordinateSelection;
+}
+
+export function drawBikes(stations, transitionDuration=750) {
+  drawCoordinates(stations, bikeLayer, 'bike', transitionDuration)
+    .style('stroke', 'blue')
+    .style('fill', 'blue')
+    .attr('r', geoScale(1));
+}
+
+export function drawNumBikesStations(stations, maxNumBikes) {
   const color = (d) => d3.rgb(d3.interpolateViridis(d.numBikes / maxNumBikes)).toString();
-  // const color = (d) => d3.rgb(d3.interpolateViridis(d.fullness)).toString();
-  // const color = () => d3.rgb('lightblue').toString();
-
-  svg.selectAll('circle.station')
-    .data(points, d => d.id)
-    .join('circle')
-    .attr('class', 'station')
-    .attr(
-      'transform',
-      d => `translate(${projection([d.longitude, d.latitude])})`,
-    )
-    .transition()
-    .duration(transitionDuration)
-    .attr('r', d => 2 + 10 * (d.numBikes / maxNumBikes) ** .5)
-    // .attr('r', d => 2 + 5 * (d.fullness) ** .5)
-    .attr('fill', d => {
-      const rgb = color(d);
-      return rgb.slice(0, -1) + ', 0.2)'; // rgba
-    })
+  drawCoordinates(stations, stationLayer, 'station')
+    .attr('r', d => geoScale(2 + 10 * (d.numBikes / maxNumBikes) ** .5))
+    .attr('fill', d => rgba(color(d), 0.2))
     .attr('stroke', color);
 }
 
-/**
- * Draws points on the map
- * @param {GeoCoord[]} points - points to draw
- * @param {d3.GeoPath} projection - projection function used to draw the map
- * @param {d3.Selection} svg - svg container to draw in
- * @param {number} transitionDuration in msec
- * @param {number} maxFlow max flow of any point ever
- */
-export function drawFlowStations(
-  points,
-  projection,
-  svg,
-  transitionDuration,
-  maxNegativeFlow,
-  maxPositiveFlow
-) {
-  const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow));
+export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
   const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
-  // const color = (d) => d3.interpolatePuOr(.5 * d.numBikesDelta / maxFlow + .5);
-  const sel = svg.selectAll('circle.station')
-    .data(points, d => d.id)
-    .join('circle')
-    .attr('class', 'station')
-    .attr(
-      'transform',
-      d => `translate(${projection([d.longitude, d.latitude])})`,
-    );
-
-  sel
-    .transition()
-    .duration(transitionDuration)
-    .attr('r', d => 2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5)
-    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5)
-    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5)
-    .attr('fill', d => {
-      const rgb = color(d);
-      return rgb.slice(0, -1) + ', 0.2)'; // rgba
-    })
+  const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow));
+  const stationSelection = drawCoordinates(stations, stationLayer, 'station')
+    .attr('r', d => geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5))
+    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
+    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
+    .attr('fill', d => rgba(color(d), 0.2))
     .attr('stroke', color);
+  addStationAnimation(stationSelection);
+}
 
-  sel
-    .on('click',
-      d => svg.selectAll('line')
-          .data(d.targets, d2 => d2.station.id)
-          .join('line')
-          .attr("x1", d2 => projection([d2.station.longitude, d2.station.latitude])[0])
-          .attr("y1", d2 => projection([d2.station.longitude, d2.station.latitude])[1])
-          .attr("x2", projection([d.longitude, d.latitude])[0])
-          .attr("y2", projection([d.longitude, d.latitude])[1])
-          .attr('stroke', 'lightblue')
-    );
+function addStationAnimation(stationSelection) {
+  stationSelection.on('click', d => { stationLayer.selectAll('line')
+    .data(d.targets, d2 => d2.station.id)
+    .join('line')
+    .attr("x1", d2 => map.latLngToLayerPoint(
+      new L.LatLng(d2.station.latitude, d2.station.longitude)
+    ).x)
+    .attr("y1", d2 => map.latLngToLayerPoint(
+      new L.LatLng(d2.station.latitude, d2.station.longitude)
+    ).y)
+    .attr("x2", map.latLngToLayerPoint(d.latlng).x)
+    .attr("y2", map.latLngToLayerPoint(d.latlng).y)
+    .attr('stroke', 'red')
+  });
 }

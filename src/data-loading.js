@@ -1,30 +1,16 @@
-import { json as getJSON, csv as getCSV } from 'd3';
+import { csv as getCSV } from 'd3';
 import { last, nth, get } from 'lodash';
-
-/**
- * Get the background map for the visualization
- * @return {*} GeoJSON
- */
-export async function getMapData() {
-  return getJSON('data/bostonmetro.geojson');
-}
 
 const SHOW_RELOCATIONS = true;
 
 /**
  * Get the Blue Bike data
  * TODO: more than one day of data, need to break up CSV files
- * @param {boolean} addTeleports
- * @return {Promise<{ stations: Stations, bikes: Bikes}>}
+ * @param {boolean} addTeleports if true, creates reposition events
  */
 export async function getBlueBikesData(addTeleports=false) {
   const bikes = {};
   const stations = {};
-  /**
-   * @param {Station | null} station
-   * @param {Date} date
-   * @param {-1 | 1} delta
-   */
   const addSizeChange = (station, date, numBikesDelta, lastStop) => {
     if (station !== null) {
       station.bikeCountDeltas.push({
@@ -34,10 +20,6 @@ export async function getBlueBikesData(addTeleports=false) {
       });
     }
   };
-  /**
-   * @param {Bike} bike 
-   * @param {BikeStop} stop 
-   */
   const addStop = (bike, stop) => {
     const lastStop = last(bike.stops);
     // log size changes
@@ -133,6 +115,7 @@ export async function getBlueBikesData(addTeleports=false) {
     // if this happens, shift all values up
     if (minNumBikes < 0) {
       if (addTeleports) {
+        // theoretically this should never happen but it is sometimes...
         console.warn('Teleport events added but a bike got lost somehow!', minNumBikes);
       }
       station.bikeCounts.forEach(bikeCount => {

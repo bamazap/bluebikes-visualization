@@ -6,10 +6,8 @@ const MAX_DATE = new Date(253402221599);
 /**
  * Get the latest-dated object with a date before the target date
  * Assumes objects are sorted by date, earliest first
- * @param {T[]} timedObjects
- * @param {Date} targetDate 
- * @return {T}
- * @template T @implements { date: Date }
+ * @param {{ date: Date }[]} timedObjects
+ * @param {Date} targetDate
  */
 function indexofMostRecent(timedObjects, targetDate) {
   return indexofInSorted(timedObjects, ({ date }, i) => {
@@ -24,6 +22,10 @@ function indexofMostRecent(timedObjects, targetDate) {
   });
 }
 
+/**
+ * @see indexofMostRecent
+ * Returns the actual element instead of the index
+ */
 function findMostRecent(timedObjects, targetDate) {
   const index = indexofMostRecent(timedObjects, targetDate);
   return index < 0 ? undefined : timedObjects[index];
@@ -32,9 +34,6 @@ function findMostRecent(timedObjects, targetDate) {
 /**
  * Get the latest stop after a given time for every bike in the dataset
  * Assumes the arrays in dataByID list earliest elements first
- * @param {Bikes} bikes
- * @param {Date} targetDate
- * @return {GeoCoord[]}
  */
 export function bikeLocationsAtTime(bikes, targetDate) {
   return Object.values(bikes).map(({ id, stops }) => {
@@ -48,32 +47,7 @@ export function bikeLocationsAtTime(bikes, targetDate) {
 }
 
 /**
- * Get the latest stop after a given time for every bike in the dataset
- * Assumes the arrays in dataByID list earliest elements first
- * @param {Bikes} bikes
- * @param {Date} targetDate
- * @return {GeoCoord[]}
- */
-export function stationBikeCountsAtTime(stations, targetDate) {
-  return Object.values(stations).map((station) => {
-    let bikeCount = findMostRecent(station.bikeCounts, targetDate);
-    bikeCount = bikeCount || station.bikeCounts[0];
-    return {
-      id: 's' + station.id,
-      latitude: station.latitude,
-      longitude: station.longitude,
-      numBikes: bikeCount.numBikes,
-      fullness: bikeCount.numBikes / station.maxNumBikes
-    };
-  });
-}
-
-/**
- * Get the latest stop after a given time for every bike in the dataset
- * Assumes the arrays in dataByID list earliest elements first
- * @param {Bikes} bikes
- * @param {Date} targetDate
- * @return {GeoCoord[]}
+ * Get data for every station during a time interval
  */
 export function stationsInTimeInterval(stations, date1, date2) {
   return Object.values(stations).map((station) => {

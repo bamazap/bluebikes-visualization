@@ -1,41 +1,27 @@
 
+import './styles.css';
+import 'leaflet/dist/leaflet.css'; // must be imported before leaflet.js
 import * as d3 from 'd3';
 import { last } from 'lodash';
-import { getMapData, getBlueBikesData } from './data-loading';
-import { drawMap, drawBikes, drawNumBikesStations, drawFlowStations } from './draw';
+import { getBlueBikesData } from './data-loading';
+import { drawBikes, drawNumBikesStations, drawFlowStations } from './draw';
 import { bikeLocationsAtTime, stationBikeCountsAtTime, stationsInTimeInterval } from './data-processing';
 import { setTimeoutPromise } from './utils';
 
-async function showSize(load) {
-  const {
-    timestamp, bikeLayer, stationLayer, delayMsec,
-    minDate, maxDate, timeStepMsec, projection, bbData
-  } = load;
+async function main() {
+  const timestamp = d3.select('#timestamp')
 
+  // parameters
+  const minDate = new Date('2019-02-01 00:00:00');
+  const maxDate = new Date('2019-02-02 00:00:01');
+  const timeStepMsec = 60 * 60 * 1000;
+  const delayMsec = 1000; // time between display changes
+  const sizeNotFlow = true;
+
+  const bbData = await getBlueBikesData(sizeNotFlow);
+
+  // aggregate calculations needed by the draw functions
   const maxNumBikes = Math.max(...Object.values(bbData.stations).map(s => s.maxNumBikes));
-
-  const draw = (date) => {
-    timestamp.text(date.toDateString() + ' ' + date.toLocaleTimeString());
-    // const bikePoints = bikeLocationsAtTime(bbData.bikes, date);
-    // drawBikes(bikePoints, projection, bikeLayer, delayMsec);
-    const stationPoints = stationBikeCountsAtTime(bbData.stations, date);
-    drawNumBikesStations(stationPoints, projection, stationLayer, delayMsec, maxNumBikes);
-  }
-
-  for (let t = minDate; t < maxDate; t = new Date(t.getTime() + timeStepMsec)) {
-    await Promise.all([
-      setTimeoutPromise(delayMsec),
-      draw(t),
-    ]);
-  }
-}
-
-async function showFlow(load) {
-  const {
-    timestamp, bikeLayer, stationLayer, delayMsec,
-    minDate, maxDate, timeStepMsec, projection, bbData
-  } = load;
-
   let minFlow = 0;
   let maxFlow = 0;
   let flowData = [];
@@ -50,15 +36,21 @@ async function showFlow(load) {
     }
   }
 
+  // method to update the view for the i'th timestep
   const draw = (i) => {
     const date = dates[i];
     timestamp.text(date.toDateString() + ' ' + date.toLocaleTimeString());
     const bikePoints = bikeLocationsAtTime(bbData.bikes, date);
-    drawBikes(bikePoints, projection, bikeLayer, delayMsec);
+    drawBikes(bikePoints);
     const stationPoints = flowData[i];
-    drawFlowStations(stationPoints, projection, stationLayer, delayMsec, minFlow, maxFlow);
+    if (sizeNotFlow) {
+      drawNumBikesStations(stationPoints, maxNumBikes);
+    } else {
+      drawFlowStations(stationPoints, minFlow, maxFlow);
+    }
   }
 
+  // draw the timesteps over time
   for (let i in dates) {
     await Promise.all([
       setTimeoutPromise(delayMsec),
@@ -67,37 +59,4 @@ async function showFlow(load) {
   }
 }
 
-async function main(sizeNotFlow=false) {
-  const svg = d3.select('body')
-    .append('svg');
-  const timestamp = d3.select('body')
-    .insert('div', ':first-child')
-    .style('color', 'white')
-    .style('font-size', '24px');
-
-  const delayMsec = 1000;
-  const minDate = new Date('2019-02-01 08:00:00');
-  const maxDate = new Date('2019-02-08 00:00:01');
-  const timeStepMsec = 60 * 60 * 1000;
-
-  const [projection, bbData] = await Promise.all([
-    getMapData().then(mapJSON => drawMap(mapJSON, svg)),
-    getBlueBikesData(sizeNotFlow)
-  ]);
-
-  const bikeLayer = svg.append("g").attr("id", "bike-layer");
-  const stationLayer = svg.append("g").attr("id", "station-layer");
-
-  const load = {
-    timestamp, bikeLayer, stationLayer, delayMsec,
-    minDate, maxDate, timeStepMsec, projection, bbData
-  };
-
-  if (sizeNotFlow) {
-    showSize(load);
-  } else {
-    showFlow(load);
-  }
-}
-
-main(false);
+main();
