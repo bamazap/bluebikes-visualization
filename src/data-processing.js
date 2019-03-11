@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { findInSorted } from './utils';
+import { indexofInSorted } from './utils';
 
 const MAX_DATE = new Date(253402221599);
 
@@ -11,8 +11,8 @@ const MAX_DATE = new Date(253402221599);
  * @return {T}
  * @template T @implements { date: Date }
  */
-function findMostRecent(timedObjects, targetDate) {
-  return findInSorted(timedObjects, ({ date }, i) => {
+function indexofMostRecent(timedObjects, targetDate) {
+  return indexofInSorted(timedObjects, ({ date }, i) => {
     const nextDate = get(timedObjects, [i + 1, 'date'], MAX_DATE);
     if (nextDate < targetDate) {
       return 1;
@@ -22,6 +22,11 @@ function findMostRecent(timedObjects, targetDate) {
       return 0;
     }
   });
+}
+
+function findMostRecent(timedObjects, targetDate) {
+  const index = indexofMostRecent(timedObjects, targetDate);
+  return index < 0 ? undefined : timedObjects[index];
 }
 
 /**
@@ -57,7 +62,8 @@ export function stationBikeCountsAtTime(stations, targetDate) {
       id: 's' + station.id,
       latitude: station.latitude,
       longitude: station.longitude,
-      numBikes: bikeCount.numBikes
+      numBikes: bikeCount.numBikes,
+      fullness: bikeCount.numBikes / station.maxNumBikes
     };
   });
 }
@@ -69,16 +75,42 @@ export function stationBikeCountsAtTime(stations, targetDate) {
  * @param {Date} targetDate
  * @return {GeoCoord[]}
  */
-export function stationFlowsInTimeInterval(stations, date1, date2) {
+export function stationsInTimeInterval(stations, date1, date2) {
   return Object.values(stations).map((station) => {
     const bikeCount1 = findMostRecent(station.bikeCounts, date1) || station.bikeCounts[0];
     const bikeCount2 = findMostRecent(station.bikeCounts, date2) || station.bikeCounts[0];
-    const delta = bikeCount2.numBikes - bikeCount1.numBikes;
+    const numBikes = (bikeCount1.numBikes + bikeCount2.numBikes) / 2;
+    const fullness = numBikes / station.maxNumBikes;
+    const numBikesDelta = bikeCount2.numBikes - bikeCount1.numBikes;
+
+    const targets = {};
+    const sources = {};
+    const i1 = Math.max(indexofMostRecent(station.bikeCountDeltas, date1), 0);
+    const i2 = indexofMostRecent(station.bikeCountDeltas, date2);
+    for (let i = i1; i <= i2; i += 1) {
+      const { otherStation, numBikesDelta: d } = station.bikeCountDeltas[i];
+      if (otherStation) {
+        const stationID = otherStation.id;
+        const obj = d > 0 ? sources : targets;
+        obj[stationID] = (obj[stationID] || 0) + 1;
+      }
+    }
+
     return {
       id: 's' + station.id,
       latitude: station.latitude,
       longitude: station.longitude,
-      flow: delta
+      numBikes,
+      fullness,
+      numBikesDelta,
+      targets: countObjToSortedEntries(targets, stations),
+      sources: countObjToSortedEntries(sources, stations)
     };
   });
+}
+
+function countObjToSortedEntries(countObj, stations) {
+  return Object.entries(countObj)
+    .map(([id, count]) => ({ station: stations[id], count }))
+    .sort((a, b) => b.count - a.count); // descending
 }

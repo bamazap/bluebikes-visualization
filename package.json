@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Blue Bike movement visualization for MIT 6.894 Assignment 3",
   "scripts": {
-    "serve": "webpack-dev-server --open",
+    "serve": "webpack-dev-server -d",
     "build": "webpack",
     "lint": "eslint src"
   },

@@ -1,6 +1,6 @@
 import uuidv4 from 'uuid/v4';
 
-const idxKey = uuidv4(); // used by findInSorted
+const idxKey = uuidv4(); // used by indexofInSorted
 /**
  * Locate an element in a sorted array
  * Performs better than find when most subsequent calls want nearby elements
@@ -13,9 +13,9 @@ const idxKey = uuidv4(); // used by findInSorted
  *    n > 0 means e is smaller than e_d
  *    n < 0 means e is larger than e_d
  *    n = 0 means e is e_d
- * @return {T} the matching element or undefined if not found
+ * @return {number} the index of the matching element or -1 if not found
  */
-export function findInSorted(array, matchFn) {
+export function indexofInSorted(array, matchFn) {
   // set initial value for search index
   if (array[idxKey] === undefined) {
     // this method makes it non-enumerable
@@ -37,7 +37,7 @@ export function findInSorted(array, matchFn) {
     array[idxKey] += direction;
     match = Math.sign(matchFn(array[array[idxKey]], array[idxKey], array));
     if (match === 0) {
-      return array[array[idxKey]];
+      return array[idxKey];
     }
     // set direction after first check
     if (direction === 0) {

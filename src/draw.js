@@ -79,6 +79,10 @@ export function drawBikes(points, projection, svg, transitionDuration) {
  * @param {number} maxNumBikes max size of any point ever
  */
 export function drawNumBikesStations(points, projection, svg, transitionDuration, maxNumBikes) {
+  const color = (d) => d3.rgb(d3.interpolateViridis(d.numBikes / maxNumBikes)).toString();
+  // const color = (d) => d3.rgb(d3.interpolateViridis(d.fullness)).toString();
+  // const color = () => d3.rgb('lightblue').toString();
+
   svg.selectAll('circle.station')
     .data(points, d => d.id)
     .join('circle')
@@ -90,11 +94,12 @@ export function drawNumBikesStations(points, projection, svg, transitionDuration
     .transition()
     .duration(transitionDuration)
     .attr('r', d => 2 + 10 * (d.numBikes / maxNumBikes) ** .5)
+    // .attr('r', d => 2 + 5 * (d.fullness) ** .5)
     .attr('fill', d => {
-      const rgb = d3.rgb(d3.interpolateViridis(d.numBikes / maxNumBikes)).toString();
+      const rgb = color(d);
       return rgb.slice(0, -1) + ', 0.2)'; // rgba
     })
-    .attr('stroke', d => d3.interpolateViridis(d.numBikes / maxNumBikes));
+    .attr('stroke', color);
 }
 
 /**
@@ -114,24 +119,38 @@ export function drawFlowStations(
   maxPositiveFlow
 ) {
   const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow));
-  const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.flow) + .5);
-  // const color = (d) => d3.interpolatePuOr(.5 * d.flow / maxFlow + .5);
-  svg.selectAll('circle.station')
+  const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
+  // const color = (d) => d3.interpolatePuOr(.5 * d.numBikesDelta / maxFlow + .5);
+  const sel = svg.selectAll('circle.station')
     .data(points, d => d.id)
     .join('circle')
     .attr('class', 'station')
     .attr(
       'transform',
       d => `translate(${projection([d.longitude, d.latitude])})`,
-    )
+    );
+
+  sel
     .transition()
     .duration(transitionDuration)
-    .attr('r', d => 2 + 10 * (Math.abs(d.flow) / maxFlow) ** .5)
-    // .attr('r', d => 2 + 10 * (Math.max(d.flow, 0) / maxFlow) ** .5)
-    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.flow, 0) / maxFlow) ** .5)
+    .attr('r', d => 2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5)
+    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5)
+    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5)
     .attr('fill', d => {
       const rgb = color(d);
       return rgb.slice(0, -1) + ', 0.2)'; // rgba
     })
     .attr('stroke', color);
+
+  sel
+    .on('click',
+      d => svg.selectAll('line')
+          .data(d.targets, d2 => d2.station.id)
+          .join('line')
+          .attr("x1", d2 => projection([d2.station.longitude, d2.station.latitude])[0])
+          .attr("y1", d2 => projection([d2.station.longitude, d2.station.latitude])[1])
+          .attr("x2", projection([d.longitude, d.latitude])[0])
+          .attr("y2", projection([d.longitude, d.latitude])[1])
+          .attr('stroke', 'lightblue')
+    );
 }

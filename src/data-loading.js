@@ -1,5 +1,5 @@
 import { json as getJSON, csv as getCSV } from 'd3';
-import { last } from 'lodash';
+import { last, nth, get } from 'lodash';
 
 /**
  * Get the background map for the visualization
@@ -8,6 +8,8 @@ import { last } from 'lodash';
 export async function getMapData() {
   return getJSON('data/bostonmetro.geojson');
 }
+
+const SHOW_RELOCATIONS = true;
 
 /**
  * Get the Blue Bike data
@@ -23,11 +25,12 @@ export async function getBlueBikesData(addTeleports=false) {
    * @param {Date} date
    * @param {-1 | 1} delta
    */
-  const addSizeChange = (station, date, numBikesDelta) => {
+  const addSizeChange = (station, date, numBikesDelta, lastStop) => {
     if (station !== null) {
       station.bikeCountDeltas.push({
         numBikesDelta,
-        date
+        date,
+        otherStation: get(lastStop, 'station', null)
       });
     }
   };
@@ -38,13 +41,13 @@ export async function getBlueBikesData(addTeleports=false) {
   const addStop = (bike, stop) => {
     const lastStop = last(bike.stops);
     // log size changes
-    if (lastStop) addSizeChange(lastStop.station, stop.date, -1);
-    addSizeChange(stop.station, stop.date, 1);
+    if (lastStop) addSizeChange(lastStop.station, stop.date, -1, nth(bike.stops, -2));
+    addSizeChange(stop.station, stop.date, 1, lastStop);
     // log bike stop
     bike.stops.push(stop);
   }
 
-  const rawData = await getCSV('/data/20190201-bluebikes-tripdata.csv');
+  const rawData = await getCSV('/data/week.csv');
   rawData.forEach((datum) => {
     const bikeID = parseInt(datum.bikeid, 10);
     if (!(bikeID in bikes)) {
@@ -83,10 +86,15 @@ export async function getBlueBikesData(addTeleports=false) {
         // add events to account for this
         const lastTime = lastStop.date.getTime();
         const timeDiff = date.getTime() - lastTime;
-        const firstThird = new Date(Math.round(lastTime + timeDiff / 3));
-        const secondThird = new Date(Math.round(lastTime + 2 * timeDiff / 3));
-        addStop(bike, { date: firstThird, station: null });
-        addStop(bike, { date: secondThird, station });
+        if (!SHOW_RELOCATIONS) { // 
+          const firstThird = new Date(Math.round(lastTime + timeDiff / 3));
+          const secondThird = new Date(Math.round(lastTime + 2 * timeDiff / 3));
+          addStop(bike, { date: firstThird, station: null });
+          addStop(bike, { date: secondThird, station });
+        } else {
+          const half = new Date(Math.round(lastTime + timeDiff / 2));
+          addStop(bike, { date: half, station });
+        }
       }
     });
   });
@@ -94,6 +102,7 @@ export async function getBlueBikesData(addTeleports=false) {
   Object.values(stations).forEach((station) => {
     let numBikes = 0;
     let minNumBikes = 0;
+    let maxNumBikes = 0;
     let bikeCounts = [];
     // order deltas by time (by station they may not be ordered)
     station.bikeCountDeltas.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -112,22 +121,25 @@ export async function getBlueBikesData(addTeleports=false) {
     station.bikeCountDeltas.forEach(({ numBikesDelta, date }) => {
       numBikes += numBikesDelta;
       minNumBikes = Math.min(numBikes, minNumBikes);
+      maxNumBikes = Math.max(numBikes, maxNumBikes);
       bikeCounts.push({
         numBikes,
         date
       });
     });
+    station.bikeCounts = bikeCounts;
+    station.maxNumBikes = maxNumBikes;
     // if you aren't adding teleports, bike counts may go negative
     // if this happens, shift all values up
     if (minNumBikes < 0) {
       if (addTeleports) {
-        throw new Error('Teleport events added but a bike got lost somehow!');
+        console.warn('Teleport events added but a bike got lost somehow!', minNumBikes);
       }
       station.bikeCounts.forEach(bikeCount => {
         bikeCount.numBikes += -1 * minNumBikes;
       });
+      maxNumBikes += -1 * minNumBikes;
     }
-    station.bikeCounts = bikeCounts;
   });
   return { bikes, stations };
 }
