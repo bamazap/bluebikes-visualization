@@ -57,7 +57,28 @@ export function stationBikeCountsAtTime(stations, targetDate) {
       id: 's' + station.id,
       latitude: station.latitude,
       longitude: station.longitude,
-      size: bikeCount.numBikes
+      numBikes: bikeCount.numBikes
+    };
+  });
+}
+
+/**
+ * Get the latest stop after a given time for every bike in the dataset
+ * Assumes the arrays in dataByID list earliest elements first
+ * @param {Bikes} bikes
+ * @param {Date} targetDate
+ * @return {GeoCoord[]}
+ */
+export function stationFlowsInTimeInterval(stations, date1, date2) {
+  return Object.values(stations).map((station) => {
+    const bikeCount1 = findMostRecent(station.bikeCounts, date1) || station.bikeCounts[0];
+    const bikeCount2 = findMostRecent(station.bikeCounts, date2) || station.bikeCounts[0];
+    const delta = bikeCount2.numBikes - bikeCount1.numBikes;
+    return {
+      id: 's' + station.id,
+      latitude: station.latitude,
+      longitude: station.longitude,
+      flow: delta
     };
   });
 }

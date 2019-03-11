@@ -75,9 +75,9 @@ export function drawBikes(points, projection, svg, transitionDuration) {
  * @param {d3.GeoPath} projection - projection function used to draw the map
  * @param {d3.Selection} svg - svg container to draw in
  * @param {number} transitionDuration in msec
- * @param {number} maxSize max size of any point ever
+ * @param {number} maxNumBikes max size of any point ever
  */
-export function drawStations(points, projection, svg, transitionDuration, maxSize) {
+export function drawNumBikesStations(points, projection, svg, transitionDuration, maxNumBikes) {
   svg.selectAll('circle.station')
     .data(points, d => d.id)
     .join('circle')
@@ -88,6 +88,37 @@ export function drawStations(points, projection, svg, transitionDuration, maxSiz
     )
     .transition()
     .duration(transitionDuration)
-    .attr('r', d => 2 + 5 * (d.size / maxSize) ** .5)
-    .attr('fill', d => d3.interpolateViridis(d.size / maxSize));
+    .attr('r', d => 2 + 5 * (d.numBikes / maxNumBikes) ** .5)
+    .attr('fill', d => d3.interpolateViridis(d.numBikes / maxNumBikes));
+}
+
+/**
+ * Draws points on the map
+ * @param {GeoCoord[]} points - points to draw
+ * @param {d3.GeoPath} projection - projection function used to draw the map
+ * @param {d3.Selection} svg - svg container to draw in
+ * @param {number} transitionDuration in msec
+ * @param {number} maxFlow max flow of any point ever
+ */
+export function drawFlowStations(
+  points,
+  projection,
+  svg,
+  transitionDuration,
+  maxNegativeFlow,
+  maxPositiveFlow
+) {
+  const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow));
+  svg.selectAll('circle.station')
+    .data(points, d => d.id)
+    .join('circle')
+    .attr('class', 'station')
+    .attr(
+      'transform',
+      d => `translate(${projection([d.longitude, d.latitude])})`,
+    )
+    .transition()
+    .duration(transitionDuration)
+    .attr('r', d => 2 + 5 * (Math.abs(d.flow) / maxFlow) ** .5)
+    .attr('fill', d => d3.interpolatePuOr(.5 * Math.abs(d.flow) / maxFlow + .5));
 }
