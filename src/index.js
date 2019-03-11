@@ -101,4 +101,4 @@ async function main(sizeNotFlow=false) {
   }
 }
 
-main(false);
+main(true);

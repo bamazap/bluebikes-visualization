@@ -31,12 +31,13 @@ export function drawMap(geojson, svg) {
   const geoPath = d3.geoPath()
     .projection(albersProjection);
 
+  const color = '#343332';
   g.selectAll('path')
     .data(geojson.features)
     .enter()
     .append('path')
-    .attr('fill', 'darkgray')
-    .attr('stroke', 'darkgray')
+    .attr('fill', color)
+    .attr('stroke', color)
     .attr('d', geoPath);
 
   return albersProjection;
@@ -88,8 +89,12 @@ export function drawNumBikesStations(points, projection, svg, transitionDuration
     )
     .transition()
     .duration(transitionDuration)
-    .attr('r', d => 2 + 5 * (d.numBikes / maxNumBikes) ** .5)
-    .attr('fill', d => d3.interpolateViridis(d.numBikes / maxNumBikes));
+    .attr('r', d => 2 + 10 * (d.numBikes / maxNumBikes) ** .5)
+    .attr('fill', d => {
+      const rgb = d3.rgb(d3.interpolateViridis(d.numBikes / maxNumBikes)).toString();
+      return rgb.slice(0, -1) + ', 0.2)'; // rgba
+    })
+    .attr('stroke', d => d3.interpolateViridis(d.numBikes / maxNumBikes));
 }
 
 /**
@@ -109,6 +114,8 @@ export function drawFlowStations(
   maxPositiveFlow
 ) {
   const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow));
+  const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.flow) + .5);
+  // const color = (d) => d3.interpolatePuOr(.5 * d.flow / maxFlow + .5);
   svg.selectAll('circle.station')
     .data(points, d => d.id)
     .join('circle')
@@ -119,6 +126,12 @@ export function drawFlowStations(
     )
     .transition()
     .duration(transitionDuration)
-    .attr('r', d => 2 + 5 * (Math.abs(d.flow) / maxFlow) ** .5)
-    .attr('fill', d => d3.interpolatePuOr(.5 * d.flow / maxFlow + .5));
+    .attr('r', d => 2 + 10 * (Math.abs(d.flow) / maxFlow) ** .5)
+    // .attr('r', d => 2 + 10 * (Math.max(d.flow, 0) / maxFlow) ** .5)
+    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.flow, 0) / maxFlow) ** .5)
+    .attr('fill', d => {
+      const rgb = color(d);
+      return rgb.slice(0, -1) + ', 0.2)'; // rgba
+    })
+    .attr('stroke', color);
 }
