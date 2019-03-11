@@ -120,5 +120,5 @@ export function drawFlowStations(
     .transition()
     .duration(transitionDuration)
     .attr('r', d => 2 + 5 * (Math.abs(d.flow) / maxFlow) ** .5)
-    .attr('fill', d => d3.interpolatePuOr(.5 * Math.abs(d.flow) / maxFlow + .5));
+    .attr('fill', d => d3.interpolatePuOr(.5 * d.flow / maxFlow + .5));
 }
