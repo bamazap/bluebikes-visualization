@@ -11,8 +11,10 @@ import getBlueBikesData from './data-loading';
 import { makeTimeIntervalIterator } from './time-iterators';
 
 // params
-const INIT_MIN_DATE = new Date(Date.UTC(2018, 0, 1));
-const INIT_MAX_DATE = new Date(Date.UTC(2019, 0, 1));
+const MIN_DATE = new Date(2018, 0, 1); // utc breaks the datepicker
+const MAX_DATE = new Date(Date.UTC(2019, 0, 1));
+const INIT_MIN_DATE = new Date(Date.UTC(2018, 8, 14));
+const INIT_MAX_DATE = new Date(Date.UTC(2018, 8, 21));
 
 function setUpFilters(onChange) {
   const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
@@ -28,9 +30,9 @@ function setUpFilters(onChange) {
   // day filters 
   datepicker("#startpicker", {
     id: 1,
+    minDate: MIN_DATE,
     maxDate: INIT_MAX_DATE,
-    minDate: INIT_MIN_DATE,
-    startDate: INIT_MIN_DATE,
+    dateSelected: INIT_MIN_DATE,
     onSelect: (instance, date) => {
       // This will set the min for the other picker as well .
       instance.setMin(date);
@@ -40,9 +42,9 @@ function setUpFilters(onChange) {
   });
   datepicker("#endpicker", {
     id: 1,
-    maxDate: INIT_MAX_DATE,
     minDate: INIT_MIN_DATE,
-    startDate: INIT_MAX_DATE,
+    maxDate: MAX_DATE,
+    dateSelected: INIT_MAX_DATE,
     onSelect: (instance, date) => {
       // This will set the min for the other picker as well .
       instance.setMax(date);
