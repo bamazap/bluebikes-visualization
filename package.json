@@ -31,6 +31,7 @@
     "js-datepicker": "^4.0.10",
     "leaflet": "^1.4.0",
     "lodash": "^4.17.11",
+    "nouislider": "^13.1.1",
     "uuid": "^3.3.2"
   }
 }

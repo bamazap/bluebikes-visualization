@@ -1,7 +1,8 @@
 
-import './styles.css';
 import 'leaflet/dist/leaflet.css'; // must be imported before leaflet.js
 import 'js-datepicker/dist/datepicker.min.css'
+import 'nouislider/distribute/nouislider.css';
+import './styles.css';
 import * as d3 from 'd3';
 import { last } from 'lodash';
 import { getBlueBikesData } from './data-loading';
@@ -9,22 +10,27 @@ import { drawBikes, drawNumBikesStations, drawFlowStations } from './draw';
 import { bikeLocationsAtTime, stationBikeCountsAtTime, stationsInTimeInterval } from './data-processing';
 import { setTimeoutPromise } from './utils';
 import * as datepicker from 'js-datepicker';
+import * as noUiSlider from 'nouislider';
 
 // params
 const initMinDate = new Date('2019-02-01 00:00:00');
 const initMaxDate = new Date('2019-02-02 00:00:01');
+const allDays = [0, 1, 2, 3, 4, 5, 6];
 const sizeNotFlow = false;
 
 // global data vars
 var bbData;
 var filterOptions = {
   minDate: initMinDate,
-  maxDate: initMaxDate
+  maxDate: initMaxDate,
+  minTime: 0,
+  maxTime: 24
 };
 var startPicker;
 var endPicker;
 
 function setUpFilters() {
+  // day filters 
   startPicker = datepicker("#startpicker", {
     id: 1,
     maxDate: initMaxDate,
@@ -47,6 +53,45 @@ function setUpFilters() {
       filterOptions.maxDate = date;
     }
   });
+
+  // day of week filters 
+  filterOptions.days = allDays;
+  console.log("week buttons", document.getElementsByClassName("week-button"));
+  Array.from(document.getElementsByClassName("week-button")).forEach((elt) => {
+    elt.onclick = function() {
+      elt.classList.toggle("selected");
+      var selectedDays = Array.from(document.getElementsByClassName("week-button"))
+      .map((elt) => elt.classList.contains("selected") ? elt.value : false)
+      .filter((elt) => !!elt);
+      console.log("selected days before ternary", selectedDays);
+      selectedDays = selectedDays.length > 0 ? selectedDays : allDays;
+      console.log("selectedDays", selectedDays);
+    }
+  });
+
+  var slider = document.getElementById('time-slider');
+
+  noUiSlider.create(slider, {
+    start: [0, 24],
+    connect: true,
+    tooltips: true,
+    step: 1,
+    range: {
+        'min': 0,
+        'max': 24
+    },
+    format: {
+        to: (n) => Math.round(n) + ":00",
+        from: (n) => parseInt(n.replace(":00", ""))
+    }
+  });
+
+  slider.noUiSlider.on('update', function(values, handle) {
+    const cleanVals = values.map((elt) => parseInt(elt.replace(":00", "")));
+    [filterOptions.minTime, filterOptions.maxTime] = cleanVals;
+    console.log("filterOptions", filterOptions);
+  });
+
 }
 
 function setSelectedDates(min, max) {
@@ -61,6 +106,7 @@ function draw(filterOptions) { // bikePoints, stationPoints) {
   // const date = dates[i];
   // timestamp.text(date.toDateString() + ' ' + date.toLocaleTimeString());
   // const bikePoints = bikeLocationsAtTime(bbData.bikes, date);
+  // TODO: fix how bike locations are updated 
   const bikePoints = bikeLocationsAtTime(bbData.bikes, filterOptions.maxDate);
   const stationPoints = stationsInTimeInterval(bbData.stations, filterOptions.minDate, filterOptions.maxDate);
   console.log("stationPoints", stationPoints);
@@ -69,7 +115,7 @@ function draw(filterOptions) { // bikePoints, stationPoints) {
   for (let station of stationPoints) {
     minFlow = Math.min(minFlow, station.numBikesDelta);
     maxFlow = Math.max(maxFlow, station.numBikesDelta);
-  }
+  } 
 
   const maxNumBikes = Math.max(...Object.values(stationPoints).map(s => s.numBikes));
   drawBikes(bikePoints);
@@ -92,22 +138,6 @@ async function main() {
   bbData = await getBlueBikesData(sizeNotFlow);
   console.log("bbData.stations", bbData.stations);
 
-  // aggregate calculations needed by the draw functions
-  //const maxNumBikes = Math.max(...Object.values(bbData.stations).map(s => s.maxNumBikes));
-  // let minFlow = 0;
-  // let maxFlow = 0;
-  // let flowData = [];
-  // let dates = [];
-  // for (let t = minDate; t < maxDate; t = new Date(t.getTime() + timeStepMsec)) {
-  //   const stationPoints = stationsInTimeInterval(bbData.stations, last(dates) || new Date(0), t);
-  //   flowData.push(stationPoints);
-  //   dates.push(t);
-  //   for (let station of stationPoints) {
-  //     minFlow = Math.min(minFlow, station.numBikesDelta);
-  //     maxFlow = Math.max(maxFlow, station.numBikesDelta);
-  //   }
-  // }
-
   // set up filters
   setUpFilters();
 
@@ -117,21 +147,6 @@ async function main() {
     //flowData.push(stationPoints);
     dates.push(t);
   }
-  console.log("dates", dates);
-
-  // method to update the view for the i'th timestep
-  // const draw = (i) => {
-  //   const date = dates[i];
-  //   timestamp.text(date.toDateString() + ' ' + date.toLocaleTimeString());
-  //   const bikePoints = bikeLocationsAtTime(bbData.bikes, date);
-  //   drawBikes(bikePoints);
-  //   const stationPoints = flowData[i];
-  //   if (sizeNotFlow) {
-  //     drawNumBikesStations(stationPoints, maxNumBikes);
-  //   } else {
-  //     drawFlowStations(stationPoints, minFlow, maxFlow);
-  //   }
-  // }
 
   // draw the timesteps over time
   const drawNext = (i, dates) => {
