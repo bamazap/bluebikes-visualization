@@ -79,26 +79,13 @@ function drawCoordinates(coordinates, layer, cls='c', transitionDuration=750) {
   return coordinateSelection;
 }
 
-export function drawBikes(stations, transitionDuration=750) {
-  drawCoordinates(stations, bikeLayer, 'bike', transitionDuration)
-    .style('stroke', 'blue')
-    .style('fill', 'blue')
-    .attr('r', geoScale(1));
-}
-
-export function drawNumBikesStations(stations, maxNumBikes) {
-  const color = (d) => d3.rgb(d3.interpolateViridis(d.numBikes / maxNumBikes)).toString();
-  drawCoordinates(stations, stationLayer, 'station')
-    .attr('r', d => geoScale(2 + 10 * (d.numBikes / maxNumBikes) ** .5))
-    .attr('fill', d => rgba(color(d), 0.2))
-    .attr('stroke', color);
-}
-
 export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
   const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
-  const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow));
+  const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow), 1);
   const stationSelection = drawCoordinates(stations, stationLayer, 'station')
-    .attr('r', d => geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5))
+    .attr('r', d => {
+      return geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
+    })
     // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
     // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
     .attr('fill', d => rgba(color(d), 0.2))
@@ -108,7 +95,7 @@ export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
 
 function addStationAnimation(stationSelection) {
   stationSelection.on('click', d => { stationLayer.selectAll('line')
-    .data(d.targets, d2 => d2.station.id)
+    .data(d.rankedTargets, d2 => d2.station.id)
     .join('line')
     .attr("x1", d2 => map.latLngToLayerPoint(
       new L.LatLng(d2.station.latitude, d2.station.longitude)

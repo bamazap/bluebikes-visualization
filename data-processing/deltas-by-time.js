@@ -15,42 +15,22 @@ function getOrSetDefault(obj, path, def) {
 
 function getCSV(filename) {
   const filepath = path.join(__dirname, '..', 'raw-data', `${filename}.csv`);
-  return new Promise((resolve, reject) => {
-    fs.readFile(filepath, 'utf8', (readErr, data) => {
-      if (readErr) {
-        reject(readErr);
-      } else {
-        try {
-          const rows = d3.csvParse(data);
-          resolve(rows);
-        } catch (parseErr) {
-          reject(parseErr);
-        }
-      }
-    });
-  });
+  const data = fs.readFileSync(filepath, 'utf8');
+  return d3.csvParse(data);
 }
 
 function writeObjectToJSON(filename, obj) {
   const jsonPath = path.join(__dirname, '..', 'data', `${filename}.json`);
-  return new Promise((resolve, reject) => {
-    fs.writeFile(jsonPath, JSON.stringify(obj), (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
+  fs.writeFileSync(jsonPath, JSON.stringify(obj));
 }
 
-async function main() {
+function main() {
   const timestepMsec = 60 * 60 * 1000; // one hour
 
   const initialLocations = {}; // where each bike starts
   const stations = {}; // name + lat + lng for each station
-  const allData = []; // each is a timestep data, an object: o[source][target] = count
-  let firstDate; // to set
+  const allData = {}; // each is a timestep data, an object: o[source][target] = count
+  const firstTime = (new Date('2019-01-01 00:00:00')).getTime();
 
   function getStationIDs(row) {
     return ['start', 'end'].map(point => {
@@ -77,14 +57,14 @@ async function main() {
   }
 
   function addMove(date, sourceStationID, targetStationID) {
-    const timestep = Math.floor((date.getTime() - firstDate.getTime()) / timestepMsec);
+    const timestep = Math.floor((date.getTime() - firstTime) / timestepMsec);
     const timestepData = getOrSetDefault(allData, timestep, {});
     const sourceData = getOrSetDefault(timestepData, sourceStationID, {});
     sourceData[targetStationID] = (sourceData[targetStationID] || 0) + 1;
   }
 
   for (let i = 1; i <= 12; i += 1) { // each month's data
-    const rows = await getCSV(i);
+    const rows = getCSV(i);
     rows.forEach(row => {
       // get row data
       const [startStationID, endStationID] = getStationIDs(row);
@@ -93,19 +73,21 @@ async function main() {
 
       // populate initial state if needed
       maybeSetBikeInitialStation(row, startStationID);
-      if (firstDate === undefined) {
-        firstDate = startDate;
-      }
 
       addMove(startDate, startStationID, endStationID);
     });
   }
 
-  await writeObjectToJSON('data-hourly', {
+  const data = Object.keys(allData)
+    .map(k => parseInt(k, 10))
+    .sort((a, b) => a - b)
+    .map(i => allData[i]);
+
+  writeObjectToJSON('data-hourly', {
     initialLocations,
     stations,
-    data: allData,
-    firstDate: firstDate.getTime(),
+    data,
+    firstTime,
     timestepMsec
   });
 }

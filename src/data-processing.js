@@ -1,80 +1,42 @@
-import { get } from 'lodash';
-import { indexofInSorted, sumObjects } from './utils';
-
-const MAX_DATE = new Date(253402221599);
-
 /**
- * Get the latest-dated object with a date before the target date
- * Assumes objects are sorted by date, earliest first
- * @param {{ date: Date }[]} timedObjects
- * @param {Date} targetDate
- */
-function indexofMostRecent(timedObjects, targetDate) {
-  return indexofInSorted(timedObjects, ({ date }, i) => {
-    const nextDate = get(timedObjects, [i + 1, 'date'], MAX_DATE);
-    if (nextDate < targetDate) {
-      return 1;
-    } else if (date > targetDate) {
-      return -1;
-    } else {
-      return 0;
-    }
-  });
-}
-
-/**
- * @see indexofMostRecent
- * Returns the actual element instead of the index
- */
-function findMostRecent(timedObjects, targetDate) {
-  const index = indexofMostRecent(timedObjects, targetDate);
-  return index < 0 ? undefined : timedObjects[index];
-}
-
-function getIndex(bbData, date) {
-  return Math.floor((date.getTime() - bbData.firstDate) / bbData.timestepMsec);
-}
-
-/**
- * Get data for every station during a time interval
+ * Get data for every station
+ * bbData is the data-hourly.json content
+ * the iterator is a function that takes bbdata and a callback
+ *   and calls the callback on elements of bbdata.data
+ *   e.g. within a time range, only for mondays, etc.
  */
 export function stationsInTimeInterval(bbData, iterator) {
-  return Object.entries(bbData.stations).map(([id, { latitude, longitude }]) => {
-    let 
-    let numBikesIn = Object.keys(bbData.stations).reduce((sum, sourceID) => {
-      let numBikesFromSource = 0;
-      iterator(bbData, sources => {
-        numBikesFromSource += get(sources, [sourceID, id], 0);
-      });
-      return sum + numBikesFromSource;
-    });
-    let numBikesOut = 0;
-    iterator(bbData, sources => {
-      numBikesOut += Object.values(get(sources, id, {})).reduce((s, v) => s + v, 0);
-    });
-
-    const targets = {};
-    const sources = {};
-    const i1 = getIndex(bbData, date1);
-    const i2 = getIndex(bbData, date2);
-    for (let i = i1; i <= i2; i += 1) {
-      const { otherStation, numBikesDelta: d } = station.bikeCountDeltas[i];
-      if (otherStation) {
-        const stationID = otherStation.id;
-        const obj = d > 0 ? sources : targets;
-        obj[stationID] = (obj[stationID] || 0) + 1;
-      }
-    }
-
-    return {
-      id: 's' + station.id,
-      latitude: station.latitude,
-      longitude: station.longitude,
-      numBikesDelta,
-      targets: countObjToSortedEntries(targets, stations),
-      sources: countObjToSortedEntries(sources, stations)
+  // an object for every station to use in the draw functions
+  const stations = {};
+  Object.entries(bbData.stations).forEach(([id, { latitude, longitude }]) => {
+    stations[id] = {
+      id: 's' + id,
+      latitude,
+      longitude,
+      numBikesIn: 0,
+      numBikesOut: 0,
+      targets: {},
+      sources: {},
     };
   });
+  // sum up the moves for the desired hours
+  iterator(bbData, (timestepData) => {
+    Object.entries(timestepData).forEach(([sID, targets]) => {
+      Object.entries(targets).forEach(([tID, delta]) => {
+        stations[sID].numBikesOut += delta;
+        stations[sID].targets[tID] = (stations[sID].targets[tID] || 0) + delta;
+        stations[tID].numBikesIn += delta;
+        stations[tID].sources[sID] = (stations[tID].sources[sID] || 0) + delta;
+      });
+    });
+  });
+  // dependent state -- nicer to work with in draw functions
+  Object.values(stations).forEach(s => {
+    s.numBikesDelta = s.numBikesIn - s.numBikesOut;
+    s.rankedTargets = countObjToSortedEntries(s.targets, bbData.stations);
+    s.rankedSources = countObjToSortedEntries(s.sources, bbData.stations);
+  });
+  return Object.values(stations);
 }
 
 function countObjToSortedEntries(countObj, stations) {

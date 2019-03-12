@@ -2,7 +2,6 @@ html {
   background: rgb(25, 25, 25);
 }
 
-
 body {
   display: flex;
   flex-direction: column;
