@@ -12,7 +12,18 @@
 </head>
 
 <body>
-  <div id="timestamp"></div>
-  <div id="map"></div>
-  <script src="dist/bundle.js"></script>
+  <div class="row">
+    <div class="column" id="filter-options">
+      <h2 class="filter-option-header">Filter by dates</h1>
+        <h3 class="filter-option-subheader">Start date:</h3> <input id="startpicker">
+        <h3 class="filter-option-subheader">End date:</h3><input id="endpicker">
+      <h2 class="filter-option-header">Filter by day of the week</h1>
+      <h2 class="filter-option-header">Filter by time of day</h1>
+    </div>
+    <div class="column">
+      <div id="timestamp"></div>
+      <div id="map"></div>
+      <script src="dist/bundle.js"></script>
+    </div>
+  </div>
 </body>

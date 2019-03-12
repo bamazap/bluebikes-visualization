@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "d3": "^5.9.1",
+    "js-datepicker": "^4.0.10",
     "leaflet": "^1.4.0",
     "lodash": "^4.17.11",
     "uuid": "^3.3.2"

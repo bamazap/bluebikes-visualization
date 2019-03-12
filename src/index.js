@@ -1,12 +1,37 @@
 
 import './styles.css';
 import 'leaflet/dist/leaflet.css'; // must be imported before leaflet.js
+import 'js-datepicker/dist/datepicker.min.css'
 import * as d3 from 'd3';
 import { last } from 'lodash';
 import { getBlueBikesData } from './data-loading';
 import { drawBikes, drawNumBikesStations, drawFlowStations } from './draw';
 import { bikeLocationsAtTime, stationBikeCountsAtTime, stationsInTimeInterval } from './data-processing';
 import { setTimeoutPromise } from './utils';
+import * as datepicker from 'js-datepicker';
+
+function setUpFilters(minDate, maxDate) {
+  const startPicker = datepicker("#startpicker", {
+    id: 1,
+    maxDate: maxDate,
+    minDate: minDate,
+    startDate: minDate,
+    onSelect: (instance, date) => {
+      // This will set the min for the other picker as well .
+      instance.setMin(date)
+    }
+  });
+  const endPicker = datepicker("#endpicker", {
+    id: 1,
+    maxDate: maxDate,
+    minDate: minDate,
+    startDate: minDate,
+    onSelect: (instance, date) => {
+      // This will set the min for the other picker as well .
+      instance.setMax(date)
+    }
+  });
+}
 
 async function main() {
   const timestamp = d3.select('#timestamp')
@@ -35,6 +60,9 @@ async function main() {
       maxFlow = Math.max(maxFlow, station.numBikesDelta);
     }
   }
+
+  // set up filters
+  setUpFilters(minDate, maxDate);
 
   // method to update the view for the i'th timestep
   const draw = (i) => {

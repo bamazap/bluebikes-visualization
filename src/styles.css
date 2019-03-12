@@ -16,6 +16,26 @@ body {
 }
 
 #map {
-  height: 80vmin;
-  width: 80vmin;
+  height: 90vmin;
+  width: 90vmin;
+}
+
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
+}
+
+.filter-option-header {
+	color:white;
+}
+
+.filter-option-subheader {
+	color:white;
+}
+
+#filter-options {
+	margin:1	0px;
 }
