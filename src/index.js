@@ -13,6 +13,7 @@ import * as datepicker from 'js-datepicker';
 // params
 const initMinDate = new Date('2019-02-01 00:00:00');
 const initMaxDate = new Date('2019-02-02 00:00:01');
+const sizeNotFlow = false;
 
 // global data vars
 var bbData;
@@ -63,16 +64,22 @@ function draw(filterOptions) { // bikePoints, stationPoints) {
   const bikePoints = bikeLocationsAtTime(bbData.bikes, filterOptions.maxDate);
   const stationPoints = stationsInTimeInterval(bbData.stations, filterOptions.minDate, filterOptions.maxDate);
   console.log("stationPoints", stationPoints);
+  let minFlow = 0;
+  let maxFlow = 0;
+  for (let station of stationPoints) {
+    minFlow = Math.min(minFlow, station.numBikesDelta);
+    maxFlow = Math.max(maxFlow, station.numBikesDelta);
+  }
 
   const maxNumBikes = Math.max(...Object.values(stationPoints).map(s => s.numBikes));
   drawBikes(bikePoints);
   // const stationPoints = flowData[i];
-  //if (sizeNotFlow) {
+  if (sizeNotFlow) {
     console.log("maxNumBikes", maxNumBikes);
     drawNumBikesStations(stationPoints, maxNumBikes);
-  // } else {
-  //   drawFlowStations(stationPoints, minFlow, maxFlow);
-  // }
+  } else {
+    drawFlowStations(stationPoints, minFlow, maxFlow);
+  }
 }
 
 async function main() {
@@ -81,7 +88,6 @@ async function main() {
   // parameters
   const timeStepMsec = 60 * 60 * 1000;
   const delayMsec = 1000; // time between display changes
-  const sizeNotFlow = false;
 
   bbData = await getBlueBikesData(sizeNotFlow);
   console.log("bbData.stations", bbData.stations);
