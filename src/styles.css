@@ -15,6 +15,69 @@ body {
 }
 
 #map {
-  height: 80vmin;
-  width: 80vmin;
+  height: 90vmin;
+  width: 90vmin;
+}
+
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
+}
+
+.filter-option-header {
+	color:white;
+}
+
+.filter-option-subheader {
+	color:white;
+}
+
+#filter-options {
+	margin:1	0px;
+}
+
+#time-slider {
+	margin-top:50px;
+	margin-right: 30px;
+	margin-left: 30px;
+}
+
+.noUi-connect {
+	background: #42b0f4;
+}
+
+.btn-groupo {
+	max-width: 500px;
+}
+
+.btn-group button {
+  background-color: #42b0f4; /* Green background */
+  border: 1px solid #4186f4; /* Green border */
+  color: white; /* White text */
+  padding: 5px 14px; /* Some padding */
+  cursor: pointer; /* Pointer/hand icon */
+  float: left; /* Float the buttons side by side */
+}
+
+.btn-group button:not(:last-child) {
+  border-right: none; /* Prevent double borders */
+}
+
+/* Clear floats (clearfix hack) */
+.btn-group:after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/* Add a background color on hover 
+.btn-group button:hover {
+  background-color: #419af4;
+}*/
+
+.btn-group button.selected {
+	background-color: #0581ff;
 }
