@@ -97,15 +97,15 @@ async function main() {
         firstDate = startDate;
       }
 
-      addMove(startDate, startDate)
+      addMove(startDate, startStationID, endStationID);
     });
   }
 
-  await writeObjectToJSON('data', {
+  await writeObjectToJSON('data-hourly', {
     initialLocations,
     stations,
     data: allData,
-    firstDate,
+    firstDate: firstDate.getTime(),
     timestepMsec
   });
 }
