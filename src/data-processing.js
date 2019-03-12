@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { indexofInSorted } from './utils';
+import { indexofInSorted, sumObjects } from './utils';
 
 const MAX_DATE = new Date(253402221599);
 
@@ -31,36 +31,32 @@ function findMostRecent(timedObjects, targetDate) {
   return index < 0 ? undefined : timedObjects[index];
 }
 
-/**
- * Get the latest stop after a given time for every bike in the dataset
- * Assumes the arrays in dataByID list earliest elements first
- */
-export function bikeLocationsAtTime(bikes, targetDate) {
-  return Object.values(bikes).map(({ id, stops }) => {
-    let stop = findMostRecent(stops, targetDate);
-    return stop && stop.station && {
-      id: 'b' + id,
-      latitude: stop.station.latitude,
-      longitude: stop.station.longitude
-    };
-  }).filter(d => !!d);
+function getIndex(bbData, date) {
+  return Math.floor((date.getTime() - bbData.firstDate) / bbData.timestepMsec);
 }
 
 /**
  * Get data for every station during a time interval
  */
-export function stationsInTimeInterval(stations, date1, date2) {
-  return Object.values(stations).map((station) => {
-    const bikeCount1 = findMostRecent(station.bikeCounts, date1) || station.bikeCounts[0];
-    const bikeCount2 = findMostRecent(station.bikeCounts, date2) || station.bikeCounts[0];
-    const numBikes = (bikeCount1.numBikes + bikeCount2.numBikes) / 2;
-    const fullness = numBikes / station.maxNumBikes;
-    const numBikesDelta = bikeCount2.numBikes - bikeCount1.numBikes;
+export function stationsInTimeInterval(bbData, iterator) {
+  return Object.entries(bbData.stations).map(([id, { latitude, longitude }]) => {
+    let 
+    let numBikesIn = Object.keys(bbData.stations).reduce((sum, sourceID) => {
+      let numBikesFromSource = 0;
+      iterator(bbData, sources => {
+        numBikesFromSource += get(sources, [sourceID, id], 0);
+      });
+      return sum + numBikesFromSource;
+    });
+    let numBikesOut = 0;
+    iterator(bbData, sources => {
+      numBikesOut += Object.values(get(sources, id, {})).reduce((s, v) => s + v, 0);
+    });
 
     const targets = {};
     const sources = {};
-    const i1 = Math.max(indexofMostRecent(station.bikeCountDeltas, date1), 0);
-    const i2 = indexofMostRecent(station.bikeCountDeltas, date2);
+    const i1 = getIndex(bbData, date1);
+    const i2 = getIndex(bbData, date2);
     for (let i = i1; i <= i2; i += 1) {
       const { otherStation, numBikesDelta: d } = station.bikeCountDeltas[i];
       if (otherStation) {
@@ -74,8 +70,6 @@ export function stationsInTimeInterval(stations, date1, date2) {
       id: 's' + station.id,
       latitude: station.latitude,
       longitude: station.longitude,
-      numBikes,
-      fullness,
       numBikesDelta,
       targets: countObjToSortedEntries(targets, stations),
       sources: countObjToSortedEntries(sources, stations)

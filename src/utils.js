@@ -53,3 +53,16 @@ export function indexofInSorted(array, matchFn) {
 export function setTimeoutPromise(t) {
   return new Promise(resolve => setTimeout(resolve, t));
 }
+
+/**
+ * @param {Object.<string,number>[]} objs 
+ */
+export function sumObjects(objs) {
+  const sums = {};
+  objs.forEach(obj => {
+    Object.entries(obj).forEach(([key, val]) => {
+      sums[key] = (sums[key] || 0) + val;
+    });
+  });
+  return sums;
+}
