@@ -2,6 +2,12 @@ const d3 = require('d3');
 const path = require('path');
 const fs = require('fs');
 
+process.env.TZ = 'UTC'; 
+Date.prototype.numDaysInMonth = function() {
+  const d= new Date(this.getFullYear(), this.getMonth() + 1, 0);
+  return d.getDate();
+}
+
 function getOrSetDefault(obj, key, def) {
   if (!(key in obj)) {
     obj[key] = def;
@@ -17,22 +23,21 @@ function getCSV(filename) {
 
 function writeObjectToJSON(filename, obj) {
   const jsonPath = path.join(__dirname, '..', 'data', `${filename}.json`);
-  fs.writeFileSync(jsonPath, JSON.stringify(obj));
+  const data = JSON.stringify(obj);
+  fs.writeFileSync(jsonPath, data);
 }
 
+const ONE_HOUR_MSEC = 60 * 60 * 1000;
 function main() {
-  const timestepMsec = 60 * 60 * 1000; // one hour
-
   const initialLocations = {}; // where each bike starts
   const stations = {}; // name + lat + lng for each station
-  const allData = []; // each is a timestep data, an object: o[source][target] = count
-  const firstTime = (new Date('2018-01-01 00:00:00')).getTime();
+  let numTimestampsEachMonth = [];
 
   function getStationIDs(row) {
     return ['start', 'end'].map(point => {
       const stationID = parseInt(row[`${point} station id`], 10);
       if (!(stationID in stations)) {
-        const name = parseFloat(row[`${point} station name`]);
+        const name = row[`${point} station name`];
         const latitude = parseFloat(row[`${point} station latitude`]);
         const longitude = parseFloat(row[`${point} station longitude`]);
         stations[stationID] = {
@@ -52,15 +57,16 @@ function main() {
     }
   }
 
-  function addMove(date, sourceStationID, targetStationID) {
-    const timestep = Math.floor((date.getTime() - firstTime) / timestepMsec);
-    const timestepData = getOrSetDefault(allData, timestep, {});
-    const sourceData = getOrSetDefault(timestepData, sourceStationID, {});
-    sourceData[targetStationID] = (sourceData[targetStationID] || 0) + 1;
-  }
-
-  for (let i = 1; i <= 12; i += 1) { // each month's data
-    const rows = getCSV(i);
+  for (let i = 0; i <= 11; i += 1) { // each month's data
+    const firstDate = (new Date(`2018-${i + 1}-01 00:00:00`));
+    const firstTime = firstDate.getTime();
+    const numTimestepsInMonth = firstDate.numDaysInMonth() * 24;
+    const data = [];
+    for (let t = 0; t < numTimestepsInMonth; t += 1) {
+      data.push({});
+    }
+  
+    const rows = getCSV(i + 1);
     rows.forEach(row => {
       // get row data
       const [startStationID, endStationID] = getStationIDs(row);
@@ -70,25 +76,24 @@ function main() {
       // populate initial state if needed
       maybeSetBikeInitialStation(row, startStationID);
 
-      addMove(startDate, startStationID, endStationID);
+      // add the ride
+      const date = startDate;
+      const timestep = Math.floor((date.getTime() - firstTime) / ONE_HOUR_MSEC);
+      const timestepData = data[timestep];
+      const sourceData = getOrSetDefault(timestepData, startStationID, {});
+      sourceData[endStationID] = (sourceData[endStationID] || 0) + 1;
     });
+
+    writeObjectToJSON(`month-${i}`, data);
+    numTimestampsEachMonth.push(numTimestepsInMonth);
   }
 
-  // // we used allData like an array
-  // // but we didn't know the size ahead of time
-  // const numTimesteps = Object.keys(allData)
-  //   .reduce((max, k) => Math.max(max, parseInt(k, 10)), 0);
-  // const data = [];
-  // for (let i = 0; i <= numTimesteps; i += 1) {
-  //   data.push(allData[i]);
-  // }
-
-  writeObjectToJSON('data-hourly', {
+  writeObjectToJSON('info', {
     initialLocations,
     stations,
-    data: allData,
-    firstTime,
-    timestepMsec
+    timestepMsec: ONE_HOUR_MSEC,
+    numTimestampsEachMonth,
+    firstTime: (new Date('2018-01-01 00:00:00')).getTime()
   });
 }
 

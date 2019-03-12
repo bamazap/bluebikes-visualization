@@ -3,9 +3,15 @@ import * as d3 from 'd3';
 
 const token = 'pk.eyJ1IjoiYmFtYXphcCIsImEiOiJjanQ0amR6dHIxM3YxNDlsbDJxZXFoaTEwIn0.HXt22ulQoeU3Xq1T7fSTRg';
 
+// used to convert units consistently
+// if you change this you may need to adjust your radius scaling
 const baseZoom = 13;
 // create a map using Leaflet
-const map = L.map('map').setView([42.3601, -71.0589], baseZoom);
+const map = L.map('map', {
+  center: [42.3601, -71.0589],
+  zoom: baseZoom,
+  minZoom: 12,
+});
 L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}`, {
   attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
   maxZoom: 18,

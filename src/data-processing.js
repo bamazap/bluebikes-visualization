@@ -1,11 +1,12 @@
 /**
  * Get data for every station
- * bbData is the data-hourly.json content
+ * bbData is the object returned from getBlueBikesData
  * the iterator is a function that takes bbdata and a callback
  *   and calls the callback on elements of bbdata.data
  *   e.g. within a time range, only for mondays, etc.
+ *   and returns a promise that resolves once it is done
  */
-export function stationsInTimeInterval(bbData, iterator) {
+export async function stationsInTimeInterval(bbData, iterator) {
   // an object for every station to use in the draw functions
   const stations = {};
   Object.entries(bbData.stations).forEach(([id, { latitude, longitude }]) => {
@@ -20,7 +21,7 @@ export function stationsInTimeInterval(bbData, iterator) {
     };
   });
   // sum up the moves for the desired hours
-  iterator(bbData, (timestepData) => {
+  await iterator(bbData, (timestepData) => {
     Object.entries(timestepData).forEach(([sID, targets]) => {
       Object.entries(targets).forEach(([tID, delta]) => {
         stations[sID].numBikesOut += delta;
