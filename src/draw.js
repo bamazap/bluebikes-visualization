@@ -15,8 +15,6 @@ L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 // create an svg layer and get it with d3
 L.svg().addTo(map);
 const svg = d3.select('#map').select('svg').style('pointer-events', 'all');
-// create layers so we can have stations be in front of bikes
-const bikeLayer = svg.append("g").attr("class", "bike-layer");
 const stationLayer = svg.append("g").attr("class", "station-layer");
 
 // go from a latlng to pixel coordinates on the map

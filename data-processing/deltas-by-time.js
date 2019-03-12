@@ -1,16 +1,12 @@
 const d3 = require('d3');
 const path = require('path');
 const fs = require('fs');
-const _ = require('lodash');
 
-// like _.get but it sets the default on the object if no value is found
-function getOrSetDefault(obj, path, def) {
-  const val = _.get(obj, path);
-  if (val === undefined) {
-    _.set(obj, path, def);
-    return def;
+function getOrSetDefault(obj, key, def) {
+  if (!(key in obj)) {
+    obj[key] = def;
   }
-  return val;
+  return obj[key];
 }
 
 function getCSV(filename) {
@@ -29,8 +25,8 @@ function main() {
 
   const initialLocations = {}; // where each bike starts
   const stations = {}; // name + lat + lng for each station
-  const allData = {}; // each is a timestep data, an object: o[source][target] = count
-  const firstTime = (new Date('2019-01-01 00:00:00')).getTime();
+  const allData = []; // each is a timestep data, an object: o[source][target] = count
+  const firstTime = (new Date('2018-01-01 00:00:00')).getTime();
 
   function getStationIDs(row) {
     return ['start', 'end'].map(point => {
@@ -78,15 +74,19 @@ function main() {
     });
   }
 
-  const data = Object.keys(allData)
-    .map(k => parseInt(k, 10))
-    .sort((a, b) => a - b)
-    .map(i => allData[i]);
+  // // we used allData like an array
+  // // but we didn't know the size ahead of time
+  // const numTimesteps = Object.keys(allData)
+  //   .reduce((max, k) => Math.max(max, parseInt(k, 10)), 0);
+  // const data = [];
+  // for (let i = 0; i <= numTimesteps; i += 1) {
+  //   data.push(allData[i]);
+  // }
 
   writeObjectToJSON('data-hourly', {
     initialLocations,
     stations,
-    data,
+    data: allData,
     firstTime,
     timestepMsec
   });

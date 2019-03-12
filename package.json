@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "d3": "^5.9.1",
-    "leaflet": "^1.4.0",
-    "lodash": "^4.17.11"
+    "leaflet": "^1.4.0"
   }
 }

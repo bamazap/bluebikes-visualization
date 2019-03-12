@@ -2,7 +2,6 @@
 import './styles.css';
 import 'leaflet/dist/leaflet.css'; // must be imported before leaflet.js
 import * as d3 from 'd3';
-import { last } from 'lodash';
 import { drawFlowStations } from './draw';
 import { stationsInTimeInterval } from './data-processing';
 import { setTimeoutPromise } from './utils';
@@ -40,8 +39,8 @@ async function main() {
   const timestamp = d3.select('#timestamp')
 
   // parameters
-  const minDate = new Date('2019-02-01 00:00:00');
-  const maxDate = new Date('2019-02-01 12:00:01');
+  const minDate = new Date('2018-02-01 00:00:00');
+  const maxDate = new Date('2018-02-02 00:00:01');
   const timeStepMsec = 60 * 60 * 1000;
   const delayMsec = 1000; // time between display changes
 
