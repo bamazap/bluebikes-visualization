@@ -60,6 +60,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
 });
 
 map.on(L.Draw.Event.DELETESTOP, function(e) {
+  console.log("clear location filters");
   changeAreaCallback(null);
 });
 
@@ -118,18 +119,10 @@ function drawCoordinates(coordinates, layer, cls='c', transitionDuration=750) {
   });
 
   const coordinateSelection = layer.selectAll(`circle.coordinate.${cls}`)
-    .data(coordinates, d => d.id);
-
-  coordinateSelection.merge(coordinateSelection)
-    .transition()
-    .duration(transitionDuration)
-    .attr('transform', geoTranslate);
-  
-  coordinateSelection.enter().append('circle')
-    .attr('class', `coordinate ${cls}`)
-    .attr('transform', geoTranslate);
-
-  coordinateSelection.exit().remove();
+    .data(coordinates, d => d.id)
+    .join("circle")
+      .attr('class', `coordinate ${cls}`)
+      .attr('transform', geoTranslate);
 
   return coordinateSelection;
 }
@@ -137,14 +130,17 @@ function drawCoordinates(coordinates, layer, cls='c', transitionDuration=750) {
 export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
   const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
   const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow), 1);
+
   const stationSelection = drawCoordinates(stations, stationLayer, 'station')
     .attr('r', d => {
-      return geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
-    })
-    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
-    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
-    .attr('fill', d => rgba(color(d), 0.2))
-    .attr('stroke', color);
+        const r = geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
+        console.log("radius", r);
+        return r;
+      })
+      // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
+      // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
+      .attr('fill', d => rgba(color(d), 0.2))
+      .attr('stroke', color);
   addStationAnimation(stationSelection);
 }
 
