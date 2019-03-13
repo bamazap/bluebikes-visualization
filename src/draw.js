@@ -46,19 +46,24 @@ var drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
- map.on(L.Draw.Event.DRAWSTART, function(e) {
+map.on(L.Draw.Event.DRAWSTART, function(e) {
   drawnItems.clearLayers();
- });
-
- map.on(L.Draw.Event.CREATED, function (e) {
-    var type = e.layerType,
-        layer = e.layer;
-
-    drawnItems.addLayer(layer);
-
-    changeAreaCallback(layer.getBounds());
-
 });
+
+map.on(L.Draw.Event.CREATED, function (e) {
+  var type = e.layerType,
+      layer = e.layer;
+
+  drawnItems.addLayer(layer);
+
+  changeAreaCallback(layer.getBounds());
+});
+
+map.on(L.Draw.Event.DELETESTOP, function(e) {
+  changeAreaCallback(null);
+});
+
+
 
 // create an svg layer and get it with d3
 L.svg().addTo(map);
