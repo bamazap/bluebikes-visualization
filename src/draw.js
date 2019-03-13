@@ -4,6 +4,8 @@ import * as d3 from 'd3';
 
 const token = 'pk.eyJ1IjoiYmFtYXphcCIsImEiOiJjanQ0amR6dHIxM3YxNDlsbDJxZXFoaTEwIn0.HXt22ulQoeU3Xq1T7fSTRg';
 
+const bounds = [42.4, -72.2, 42.3, -71.0];
+
 // used to convert units consistently
 // if you change this you may need to adjust your radius scaling
 const baseZoom = 13;
@@ -21,12 +23,32 @@ L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 }).addTo(map);
 // create an svg layer and get it with d3
 L.svg().addTo(map);
-const svg = d3.select('#map').select('svg').style('pointer-events', 'all');
+const svg = d3.select('#map').select('svg')
+  .attr('pointer-events', 'all')
+  .style('position', 'relative');
+const voronoiLayer = svg.append("g").attr("class", "voronoi-layer");
 const stationLayer = svg.append("g").attr("class", "station-layer");
+const tooltipWidth = 100;
+const tooltipHeight = 50;
+const tooltip = svg.append("foreignObject").attr("class", "tooltip-layer")
+  .style("opacity", 0)
+  .attr('width', tooltipWidth)
+  .attr('height', tooltipHeight);
+const tooltipText = tooltip.append('xhtml:p')
+  .style('width', '100%')
+  .style('height', '100%')
+  .style('background', 'lightblue')
+  .style('text-align', 'center')
+  .attr('font-size', 16);
+
+
+function geoCoordsToXY(d) {
+  return map.latLngToLayerPoint(new L.LatLng(d.latitude, d.longitude));
+}
 
 // go from a latlng to pixel coordinates on the map
 function geoTranslate(d) {
-  const { x, y } = map.latLngToLayerPoint(d.latlng);
+  const { x, y } = geoCoordsToXY(d);
   return `translate(${x}, ${y})`;
 }
 
@@ -56,38 +78,72 @@ map.on('zoomend', () => {
 });
 
 /**
+ * Draw voronoi map (of polygons containing all space nearest to each point)
+ * @param {{ id: string, latitude: number, longitude: number}[]} coordinates 
+ */
+function drawVoronoi(coordinates) {
+  const { x: x1, y: y1 } = map.latLngToLayerPoint(new L.LatLng(bounds[0], bounds[1]));
+  const { x: x2, y: y2 } = map.latLngToLayerPoint(new L.LatLng(bounds[2], bounds[3]));
+  const voronoiBounds = [[x1, y1], [x2, y2]];
+
+  function draw() {
+    const voronoi = d3.voronoi()
+      .x(d => geoCoordsToXY(d).x)
+      .y(d => geoCoordsToXY(d).y)
+      .extent(voronoiBounds);
+    const polygons = voronoi.polygons(coordinates);
+
+    return voronoiLayer.selectAll('path.voronoi')
+      .data(polygons, d => d && d.data.id)
+      .join('path')
+      .attr('class', 'voronoi')
+      .attr('fill', 'none')
+      .attr('stroke', 'none')
+      .attr('d', d => d ? 'M' + d.join('L') + 'Z' : null)
+      .attr('pointer-events', 'all');
+  }
+
+  map.on('zoomend', draw);
+  return draw();
+}
+
+/**
  * Draw coordinates on the map
- * @param {{ id, latitiude: number, longitude: number}[]} coordinates 
+ * @param {{ id: string, latitude: number, longitude: number}[]} coordinates 
  * @param {d3.Selection} layer - svg to draw in
  * @param {string} cls - class to add (needed to have separate coordinate sets) 
- * @param {number} transitionDuration - msec movement animation should take
  */
-function drawCoordinates(coordinates, layer, cls='c', transitionDuration=750) {
-  coordinates.forEach((coord) => {
-    coord.latlng = new L.LatLng(coord.latitude, coord.longitude);
-  });
-
-  const coordinateSelection = layer.selectAll(`circle.coordinate.${cls}`)
-    .data(coordinates, d => d.id);
-
-  coordinateSelection.merge(coordinateSelection)
-    .transition()
-    .duration(transitionDuration)
-    .attr('transform', geoTranslate);
-  
-  coordinateSelection.enter().append('circle')
+function drawCoordinates(coordinates, layer, cls='c') {
+  return layer.selectAll(`circle.coordinate.${cls}`)
+    .data(coordinates, d => d.id)
+    .join('circle')
     .attr('class', `coordinate ${cls}`)
     .attr('transform', geoTranslate);
+}
 
-  coordinateSelection.exit().remove();
-
-  return coordinateSelection;
+/**
+ * Draw stations and voronoi layer on the map. Should only be called once. 
+ */
+export function drawStations(stations) {
+  drawVoronoi(stations)
+    .on("mouseover", (d) => {
+      tooltip
+        .attr('transform', geoTranslate(d.data))
+        .style("opacity", .9);
+      tooltipText.text(d.data.name);
+    });
 }
 
 export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
   const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
+
+  drawCoordinates(stations, stationLayer, 'center')
+    .attr('r', 1)
+    .attr('fill', color)
+    .attr('stroke', color);
+
   const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow), 1);
-  const stationSelection = drawCoordinates(stations, stationLayer, 'station')
+  const stationSel = drawCoordinates(stations, stationLayer, 'halo')
     .attr('r', d => {
       return geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
     })
@@ -95,21 +151,17 @@ export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
     // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
     .attr('fill', d => rgba(color(d), 0.2))
     .attr('stroke', color);
-  addStationAnimation(stationSelection);
+  addStationAnimation(stationSel);
 }
 
 function addStationAnimation(stationSelection) {
   stationSelection.on('click', d => { stationLayer.selectAll('line')
     .data(d.rankedTargets, d2 => d2.station.id)
     .join('line')
-    .attr("x1", d2 => map.latLngToLayerPoint(
-      new L.LatLng(d2.station.latitude, d2.station.longitude)
-    ).x)
-    .attr("y1", d2 => map.latLngToLayerPoint(
-      new L.LatLng(d2.station.latitude, d2.station.longitude)
-    ).y)
-    .attr("x2", map.latLngToLayerPoint(d.latlng).x)
-    .attr("y2", map.latLngToLayerPoint(d.latlng).y)
-    .attr('stroke', 'red')
+    .attr("x1", d2 => geoCoordsToXY(d2).x)
+    .attr("y1", d2 => geoCoordsToXY(d2).y)
+    .attr("x2", geoCoordsToXY(d).x)
+    .attr("y2", geoCoordsToXY(d).y)
+    .attr('stroke', 'red');
   });
 }

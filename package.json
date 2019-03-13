@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "d3": "^5.9.1",
-    "leaflet": "^1.4.0",
     "js-datepicker": "^4.0.10",
+    "leaflet": "^1.4.0",
     "nouislider": "^13.1.1"
   }
 }

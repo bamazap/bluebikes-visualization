@@ -101,3 +101,7 @@ main {
 .btn-group button.selected {
 	background-color: #0581ff;
 }
+
+svg, svg * {
+  pointer-events: all !important;
+}

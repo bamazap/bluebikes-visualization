@@ -29,7 +29,6 @@ function writeObjectToJSON(filename, obj) {
 
 const ONE_HOUR_MSEC = 60 * 60 * 1000;
 function main() {
-  const initialLocations = {}; // where each bike starts
   const stations = {}; // name + lat + lng for each station
   let numTimestampsEachMonth = [];
 
@@ -41,6 +40,7 @@ function main() {
         const latitude = parseFloat(row[`${point} station latitude`]);
         const longitude = parseFloat(row[`${point} station longitude`]);
         stations[stationID] = {
+          id: stationID,
           name,
           latitude,
           longitude
@@ -48,13 +48,6 @@ function main() {
       }
       return stationID
     });
-  }
-
-  function maybeSetBikeInitialStation(row, startStationID) {
-    const bikeID = parseInt(row.bikeid, 10);
-    if (!(bikeID in initialLocations)) {
-      initialLocations[bikeID] = startStationID;
-    }
   }
 
   for (let i = 0; i <= 11; i += 1) { // each month's data
@@ -73,9 +66,6 @@ function main() {
       const startDate = new Date(row.starttime);
       // const endDate = new Date(row.endtime);
 
-      // populate initial state if needed
-      maybeSetBikeInitialStation(row, startStationID);
-
       // add the ride
       const date = startDate;
       const timestep = Math.floor((date.getTime() - firstTime) / ONE_HOUR_MSEC);
@@ -89,7 +79,6 @@ function main() {
   }
 
   writeObjectToJSON('info', {
-    initialLocations,
     stations,
     timestepMsec: ONE_HOUR_MSEC,
     numTimestampsEachMonth,

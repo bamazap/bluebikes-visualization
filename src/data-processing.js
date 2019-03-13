@@ -9,9 +9,10 @@
 export async function stationsInTimeInterval(bbData, iterator) {
   // an object for every station to use in the draw functions
   const stations = {};
-  Object.entries(bbData.stations).forEach(([id, { latitude, longitude }]) => {
+  Object.entries(bbData.stations).forEach(([id, { name, latitude, longitude }]) => {
     stations[id] = {
       id: 's' + id,
+      name,
       latitude,
       longitude,
       numBikesIn: 0,

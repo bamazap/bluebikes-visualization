@@ -1,6 +1,6 @@
 
 import './styles.css';
-import { drawFlowStations } from './draw';
+import { drawStations, drawFlowStations } from './draw';
 import { stationsInTimeInterval } from './data-processing';
 import getBlueBikesData from './data-loading';
 import { makeTimeIntervalIterator } from './time-iterators';
@@ -14,13 +14,14 @@ async function draw(bbData, filterOptions) {
   for (let station of stationPoints) {
     minFlow = Math.min(minFlow, station.numBikesDelta);
     maxFlow = Math.max(maxFlow, station.numBikesDelta);
-  } 
+  }
   drawFlowStations(stationPoints, minFlow, maxFlow);
 }
 
 async function main() {
   document.querySelector('body').style = '';
   const bbData = await getBlueBikesData();
+  drawStations(Object.values(bbData.stations));
   setUpFilters((filterOptions) => {
     draw(bbData, filterOptions);
   });
