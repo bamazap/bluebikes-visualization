@@ -145,6 +145,9 @@ map.on('zoomend', () => {
     coordinateSelection.attr('r', function() {
       return parseFloat(d3.select(this).attr('r')) * scale;
     });
+    legendLayer.selectAll('circle').attr('r', function() {
+      return parseFloat(d3.select(this).attr('r')) * scale;
+    });
     lastZoom = newZoom;
   }
 });
@@ -264,7 +267,7 @@ export function drawLegend(maxFlow, minFlow) {
 
   const cls = "legend-circle";
   // const legendLayer = document.getElementById("legend").append("svg");
-  const vals = [maxFlow, (maxFlow+minFlow)/2, Math.max(minFlow, 1)];
+  const vals = [maxFlow, Math.round((maxFlow+minFlow)/2), Math.max(minFlow, 1)];
 
   const legendElts = [];
   const labels = [];
