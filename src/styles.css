@@ -130,3 +130,7 @@ path.leaflet-interactive {
 #legend {
   background-color: white;  
 }
+
+svg, svg * {
+  pointer-events: all !important;
+}

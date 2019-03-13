@@ -5,7 +5,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import 'js-datepicker/dist/datepicker.min.css'
 import 'nouislider/distribute/nouislider.css';
 import './styles.css';
-import { drawFlowStations, drawLegend } from './draw';
+import { drawFlowStations, drawLegend, drawStations } from './draw';
 import { stationsInTimeIntervalAndRegion } from './data-processing';
 import getBlueBikesData from './data-loading';
 import { makeTimeIntervalIterator } from './time-iterators';
@@ -30,6 +30,7 @@ async function draw(bbData, filterOptions) {
 async function main() {
   document.querySelector('body').style = '';
   const bbData = await getBlueBikesData();
+  drawStations(Object.values(bbData.stations));
   setUpFilters((filterOptions) => {
     draw(bbData, filterOptions);
   });
