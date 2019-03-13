@@ -82,3 +82,8 @@ body {
 .btn-group button.selected {
 	background-color: #0581ff;
 }
+
+/* Leaflet boxes */
+path.leaflet-interactive {
+  fill: none;
+}

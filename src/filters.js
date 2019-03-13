@@ -2,6 +2,7 @@ import 'js-datepicker/dist/datepicker.min.css'
 import 'nouislider/distribute/nouislider.css';
 import * as datepicker from 'js-datepicker';
 import * as noUiSlider from 'nouislider';
+import { setChangeAreaCallback } from './draw';
 
 const MIN_DATE = new Date(2018, 0, 1); // UTC breaks datepicker
 const MAX_DATE = new Date(2019, 0, 1);
@@ -18,7 +19,8 @@ export default function setUpFilters(onChange) {
     maxDate: INIT_MAX_DATE,
     minTime: 0,
     maxTime: 24,
-    days: new Set()
+    days: new Set(),
+    region: null, // a Leaflet LatLng object describing the selected square, falsy if nothing selected
   };
 
   // day filters 
@@ -82,4 +84,11 @@ export default function setUpFilters(onChange) {
     [filterOptions.minTime, filterOptions.maxTime] = cleanVals;
     onChange(filterOptions);
   });
+
+  // area filters 
+  const onChangeArea = (region) => {
+    filterOptions.region = region;
+    onChange(filterOptions);
+  }
+  setChangeAreaCallback(onChangeArea);
 }

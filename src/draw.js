@@ -17,6 +17,8 @@ const map = L.map('map', {
   //drawControl: true 
 });
 
+var changeAreaCallback = function() {};
+
 L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}`, {
   attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
   maxZoom: 18,
@@ -27,42 +29,35 @@ L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 // var editableLayers = new L.FeatureGroup();
 // map.addLayer(editableLayers);
 
-console.log("adding drawing pane");
- var drawnItems = new L.FeatureGroup();
- map.addLayer(drawnItems);
+var drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
 
- var drawControl = new L.Control.Draw({
-     // edit: {
-     //     featureGroup: drawnItems
-     // }
-      draw: {
-       polygon: false,
-       marker: false, 
-       circle: false,
-       circlemarker: false,
-       polyline: false
-      },
-      edit: {
-        featureGroup: drawnItems
-      }
- });
- map.addControl(drawControl);
+var drawControl = new L.Control.Draw({
+  draw: {
+   polygon: false,
+   marker: false, 
+   circle: false,
+   circlemarker: false,
+   polyline: false
+  },
+  edit: {
+    featureGroup: drawnItems
+  }
+});
+map.addControl(drawControl);
 
  map.on(L.Draw.Event.DRAWSTART, function(e) {
-  console.log("edit start");
-    drawnItems.clearLayers();
+  drawnItems.clearLayers();
  });
 
  map.on(L.Draw.Event.CREATED, function (e) {
-   //drawnItems.clearLayers();
     var type = e.layerType,
         layer = e.layer;
 
-    // if (type === 'marker') {
-    //     layer.bindPopup('A popup!');
-    // }
-
     drawnItems.addLayer(layer);
+
+    changeAreaCallback(layer.getBounds());
+
 });
 
 // create an svg layer and get it with d3
@@ -100,6 +95,10 @@ map.on('zoomend', () => {
     lastZoom = newZoom;
   }
 });
+
+export function setChangeAreaCallback(f) {
+  changeAreaCallback = f;
+}
 
 /**
  * Draw coordinates on the map
