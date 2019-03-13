@@ -12,29 +12,31 @@
 </head>
 
 <body style="visibility: hidden">
-  <div class="row">
-    <div class="column" id="filter-options">
+  <header>
+    <h1>How people use <span style="display:none">Blue Bikes</span></h1>
+    <img src="https://d21xlh2maitm24.cloudfront.net/bst/Blue-Bikes-SM-logo_p_WEB_v2.svg">
+  </header>
+  <main>
+    <div id="map"></div>
+    <div id="filter-options">
       <h2 class="filter-option-header">Filter by dates</h2>
-        <h3 class="filter-option-subheader">Start date:</h3> <input id="startpicker">
-        <h3 class="filter-option-subheader">End date:</h3><input id="endpicker">
+      <h3 class="filter-option-subheader">Start date:</h3><input id="startpicker">
+      <h3 class="filter-option-subheader">End date:</h3><input id="endpicker">
+
       <h2 class="filter-option-header">Filter by day of the week</h2>
-        <div class="btn-group">
-          <button value="0" class="week-button">Sunday</button>
-          <button value="1" class="week-button">Monday</button>
-          <button value="2" class="week-button">Tuesday</button>
-          <button value="3" class="week-button">Wednesday</button>
-          <button value="4" class="week-button">Thursday</button>
-          <button value="5" class="week-button">Friday</button>
-          <button value="6" class="week-button">Saturday</button>
-        </div>
+      <div class="btn-group">
+        <button value="0" class="week-button">Su</button>
+        <button value="1" class="week-button">Mo</button>
+        <button value="2" class="week-button">Tu</button>
+        <button value="3" class="week-button">We</button>
+        <button value="4" class="week-button">Th</button>
+        <button value="5" class="week-button">Fr</button>
+        <button value="6" class="week-button">Sa</button>
+      </div>
+
       <h2 class="filter-option-header">Filter by time of day</h2>
-        <div id="time-slider">
-        </div>  
+      <div id="time-slider"></div>  
     </div>
-    <div class="column">
-      <div id="timestamp"></div>
-      <div id="map"></div>
-      <script src="dist/bundle.js"></script>
-    </div>
-  </div>
+  </main>
+  <script src="dist/bundle.js"></script>
 </body>
