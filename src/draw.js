@@ -47,12 +47,14 @@ var drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 map.on(L.Draw.Event.DRAWSTART, function(e) {
-  drawnItems.clearLayers();
+  //drawnItems.clearLayers();
 });
 
 map.on(L.Draw.Event.CREATED, function (e) {
   var type = e.layerType,
       layer = e.layer;
+
+  drawnItems.clearLayers();
 
   drawnItems.addLayer(layer);
 
@@ -133,9 +135,7 @@ export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
 
   const stationSelection = drawCoordinates(stations, stationLayer, 'station')
     .attr('r', d => {
-        const r = geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
-        console.log("radius", r);
-        return r;
+        return geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
       })
       // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
       // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative

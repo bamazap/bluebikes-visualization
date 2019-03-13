@@ -6,16 +6,15 @@ import 'js-datepicker/dist/datepicker.min.css'
 import 'nouislider/distribute/nouislider.css';
 import './styles.css';
 import { drawFlowStations } from './draw';
-import { stationsInTimeInterval, stationsInRegion } from './data-processing';
+import { stationsInTimeIntervalAndRegion } from './data-processing';
 import getBlueBikesData from './data-loading';
 import { makeTimeIntervalIterator } from './time-iterators';
 import setUpFilters from './filters';
 
 async function draw(bbData, filterOptions) {
   const iterator = makeTimeIntervalIterator(filterOptions);
-  const stationPointsFilteredTime = await stationsInTimeInterval(bbData, iterator);
-  const stationPoints = stationsInRegion(stationPointsFilteredTime, filterOptions.region);
-  console.log("stationPoints", stationPoints);
+  const stationPoints = await stationsInTimeIntervalAndRegion(bbData, iterator, filterOptions.region);
+  //const stationPoints = stationsInRegion(stationPointsFilteredTime, filterOptions.region);
   let minFlow = 0;
   let maxFlow = 0;
   for (let station of stationPoints) {
@@ -28,7 +27,7 @@ async function draw(bbData, filterOptions) {
 async function main() {
   document.querySelector('body').style = '';
   const bbData = await getBlueBikesData();
-  console.log("bbdata", bbData.stations);
+  console.log("bbData", bbData);
   setUpFilters((filterOptions) => {
     draw(bbData, filterOptions);
   });

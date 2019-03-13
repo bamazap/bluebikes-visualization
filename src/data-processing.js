@@ -8,7 +8,7 @@ import * as L from 'leaflet';
  *   e.g. within a time range, only for mondays, etc.
  *   and returns a promise that resolves once it is done
  */
-export async function stationsInTimeInterval(bbData, iterator) {
+export async function stationsInTimeIntervalAndRegion(bbData, iterator, region) {
   // an object for every station to use in the draw functions
   const stations = {};
   Object.entries(bbData.stations).forEach(([id, { latitude, longitude }]) => {
@@ -20,16 +20,20 @@ export async function stationsInTimeInterval(bbData, iterator) {
       numBikesOut: 0,
       targets: {},
       sources: {},
+      inRegion: region ? region.contains(new L.LatLng(latitude, longitude)) : true
     };
   });
   // sum up the moves for the desired hours
+  // ONLY consider trips that END in the desired region
   await iterator(bbData, (timestepData) => {
     Object.entries(timestepData).forEach(([sID, targets]) => {
       Object.entries(targets).forEach(([tID, delta]) => {
-        stations[sID].numBikesOut += delta;
-        stations[sID].targets[tID] = (stations[sID].targets[tID] || 0) + delta;
-        stations[tID].numBikesIn += delta;
-        stations[tID].sources[sID] = (stations[tID].sources[sID] || 0) + delta;
+        if (stations[tID].inRegion) {
+          stations[sID].numBikesOut += delta;
+          stations[sID].targets[tID] = (stations[sID].targets[tID] || 0) + delta;
+          stations[tID].numBikesIn += delta;
+          stations[tID].sources[sID] = (stations[tID].sources[sID] || 0) + delta;
+        }
       });
     });
   });
@@ -42,19 +46,19 @@ export async function stationsInTimeInterval(bbData, iterator) {
   return Object.values(stations);
 }
 
-/** 
- * Filter data to only stations in a certain region
- */
-export function stationsInRegion(stationData, region) {
-  if (!region) {
-    return stationData;
-  }
-  return stationData.filter((station) => {
-    const stationLoc = new L.LatLng(station.latitude, station.longitude)
+// /** 
+//  * Filter data to only stations in a certain region
+//  */
+// export function stationsInRegion(stationData, region) {
+//   if (!region) {
+//     return stationData;
+//   }
+//   return stationData.filter((station) => {
+//     const stationLoc = new L.LatLng(station.latitude, station.longitude)
 
-    return region.contains(stationLoc);
-  });
-}
+//     return region.contains(stationLoc);
+//   });
+// }
 
 function countObjToSortedEntries(countObj, stations) {
   return Object.entries(countObj)
