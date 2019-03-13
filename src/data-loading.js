@@ -29,7 +29,7 @@ export default async function getBlueBikesData() {
     ...info,
     async getData(timestep) {
       const [monthNum, index] = getMonthAndIndex(timestep);
-      if (monthNum > 0 && !(monthNum in monthlyData)) {
+      if (monthNum >= 0 && !(monthNum in monthlyData)) {
         monthlyData[monthNum] = await getJSON(`data/month-${monthNum}.json`);
       }
       return index < 0 ? undefined : monthlyData[monthNum][index];

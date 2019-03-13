@@ -21,7 +21,7 @@ const config = {
         ],
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
+        test: /\.(png|svg|jpg|gif|woff|woff2|eot|ttf|otf)$/,
         use: [
           {
             loader: 'file-loader',
@@ -34,7 +34,12 @@ const config = {
       {
         test: /\.(woff|woff2|eot|ttf|otf)$/,
         use: [
-          'file-loader',
+          {
+            loader: 'file-loader',
+            options: {
+              publicPath: 'dist'
+            }
+          }
         ],
       },
     ],
