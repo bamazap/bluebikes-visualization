@@ -1,3 +1,4 @@
+import 'leaflet/dist/leaflet.css'; // must be imported before leaflet.js
 import * as L from 'leaflet';
 import * as d3 from 'd3';
 
