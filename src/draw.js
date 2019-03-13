@@ -4,6 +4,12 @@ import * as L from 'leaflet';
 import 'leaflet-draw';
 import * as d3 from 'd3';
 
+d3.selection.prototype.moveToFront = function() {  
+  return this.each(function(){
+    this.parentNode.appendChild(this);
+  });
+};
+
 const token = 'pk.eyJ1IjoiYmFtYXphcCIsImEiOiJjanQ0amR6dHIxM3YxNDlsbDJxZXFoaTEwIn0.HXt22ulQoeU3Xq1T7fSTRg';
 
 const bounds = [42.4, -72.2, 42.3, -71.0];
@@ -52,15 +58,12 @@ map.on(L.Draw.Event.DRAWSTART, function(e) {
   //drawnItems.clearLayers();
 });
 
-map.on(L.Draw.Event.CREATED, function (e) {
-  var type = e.layerType,
-      layer = e.layer;
-
+map.on(L.Draw.Event.CREATED, (e) => {
+  const { layer } = e;
   drawnItems.clearLayers();
-
   drawnItems.addLayer(layer);
-
   changeAreaCallback(layer.getBounds());
+  d3.select('#map svg#viz').moveToFront();
 });
 
 document.getElementById("region-select").onclick = () => {
@@ -80,9 +83,11 @@ document.getElementById("region-clear").onclick = () => {
 // create an svg layer and get it with d3
 L.svg().addTo(map);
 const svg = d3.select('#map').select('svg')
+  .attr('id', 'viz')
   .attr('pointer-events', 'all')
   .style('position', 'relative');
 const voronoiLayer = svg.append("g").attr("class", "voronoi-layer");
+const unselectedLayer = svg.append("g").attr("class", "unselected-layer");
 const stationLayer = svg.append("g").attr("class", "station-layer");
 const tooltipWidth = 100;
 const tooltipHeight = 50;
@@ -126,6 +131,7 @@ function calcColor(nBikesDelta) {
 
 // go from rgb string to rgba string
 function rgba(rgb, a) {
+  if (rgb === 'none') return 'none';
   return `${rgb.slice(0, -1)},${a})`;
 }
 
@@ -205,13 +211,26 @@ export function drawStations(stations) {
         .attr('transform', geoTranslate(d.data))
         .style("opacity", .9);
       tooltipText.text(d.data.name);
-    });
+    }, true);
+  drawCoordinates(stations, unselectedLayer, 'unselected-center')
+    .attr('r', 1)
+    .attr('fill', 'black')
+    .attr('stroke', 'black');
 }
 
-export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
-  const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
+d3.select('#map').on("mouseleave", () => {
+  tooltip.style("opacity", 0);
+});
 
-  drawCoordinates(stations, stationLayer, 'center')
+export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
+  const color = (d) => {
+    const sign = Math.sign(d.numBikesDelta);
+    if (sign > 0) return 'rgb(127, 59, 8)';
+    if (sign < 0) return 'rgb(45, 0, 75)';
+    return 'none'
+  }
+
+  drawCoordinates(stations, stationLayer, 'selected-center')
     .attr('r', 1)
     .attr('fill', color)
     .attr('stroke', color);
