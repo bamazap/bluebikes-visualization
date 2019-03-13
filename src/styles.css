@@ -134,3 +134,7 @@ path.leaflet-interactive {
 svg, svg * {
   pointer-events: all !important;
 }
+
+a {
+  color: white;
+}
