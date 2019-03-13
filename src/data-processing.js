@@ -1,3 +1,5 @@
+import * as L from 'leaflet';
+
 /**
  * Get data for every station
  * bbData is the object returned from getBlueBikesData
@@ -38,6 +40,20 @@ export async function stationsInTimeInterval(bbData, iterator) {
     s.rankedSources = countObjToSortedEntries(s.sources, bbData.stations);
   });
   return Object.values(stations);
+}
+
+/** 
+ * Filter data to only stations in a certain region
+ */
+export function stationsInRegion(stationData, region) {
+  if (!region) {
+    return stationData;
+  }
+  return stationData.filter((station) => {
+    const stationLoc = new L.LatLng(station.latitude, station.longitude)
+
+    return region.contains(stationLoc);
+  });
 }
 
 function countObjToSortedEntries(countObj, stations) {
