@@ -278,7 +278,7 @@ export function drawLegend(maxFlow, minFlow) {
   const labels = [];
   for (let i = 0; i < 6; i++) {
     let val = vals[i%3];
-    let color = (d) => calcColor(i%2 ? -val : val);
+    let color = () => calcColor(i%2 ? -val : val);
     let row = i % 3;
     let col = i % 2; 
     let x, y;
