@@ -42,6 +42,7 @@ export async function stationsInTimeIntervalAndRegion(bbData, iterator, region, 
     });
   });
   // dependent state -- nicer to work with in draw functions
+
   Object.values(stations).forEach(s => {
     s.numBikesDelta = s.numBikesIn - s.numBikesOut;
     s.rankedTargets = countObjToSortedEntries(s.targets, bbData.stations);

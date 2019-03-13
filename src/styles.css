@@ -126,3 +126,7 @@ path.leaflet-interactive {
 .region-select-button {
   margin-bottom:20px;
 }
+
+#legend {
+  background-color: white;  
+}

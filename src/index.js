@@ -5,7 +5,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import 'js-datepicker/dist/datepicker.min.css'
 import 'nouislider/distribute/nouislider.css';
 import './styles.css';
-import { drawFlowStations } from './draw';
+import { drawFlowStations, drawLegend } from './draw';
 import { stationsInTimeIntervalAndRegion } from './data-processing';
 import getBlueBikesData from './data-loading';
 import { makeTimeIntervalIterator } from './time-iterators';
@@ -17,11 +17,14 @@ async function draw(bbData, filterOptions) {
   //const stationPoints = stationsInRegion(stationPointsFilteredTime, filterOptions.region);
   let minFlow = 0;
   let maxFlow = 0;
+  let minAbs = 0;
   for (let station of stationPoints) {
     minFlow = Math.min(minFlow, station.numBikesDelta);
     maxFlow = Math.max(maxFlow, station.numBikesDelta);
+    minAbs = Math.min(minAbs, Math.abs(station.numBikesDelta));
   } 
   drawFlowStations(stationPoints, minFlow, maxFlow);
+  drawLegend(Math.max(Math.abs(maxFlow), Math.abs(minFlow)), minAbs);
 }
 
 async function main() {

@@ -80,6 +80,8 @@ L.svg().addTo(map);
 const svg = d3.select('#map').select('svg').style('pointer-events', 'all');
 const stationLayer = svg.append("g").attr("class", "station-layer");
 
+const legendLayer = d3.select("#legend").append("svg").append("g").attr("class", "legend-layer");
+
 // go from a latlng to pixel coordinates on the map
 function geoTranslate(d) {
   const { x, y } = map.latLngToLayerPoint(d.latlng);
@@ -89,6 +91,14 @@ function geoTranslate(d) {
 // go from a rather unitless size to a distance on the map
 function geoScale(r) {
   return r * map.getZoomScale(map.getZoom(), baseZoom)
+}
+
+function calcSize(flow, maxFlow) {
+  return geoScale(2 + 10 * (Math.abs(flow) / maxFlow) ** .5);
+}
+
+function calcColor(nBikesDelta) {
+  return d3.interpolatePuOr(.5 * Math.sign(nBikesDelta) + .5);
 }
 
 // go from rgb string to rgba string
@@ -118,7 +128,7 @@ export function setChangeAreaCallback(f) {
 /**
  * Draw coordinates on the map
  * @param {{ id, latitiude: number, longitude: number}[]} coordinates 
- * @param {d3.Selection} layer - svg to draw in
+ * @param {d3.Selection} layer -   to draw in
  * @param {string} cls - class to add (needed to have separate coordinate sets) 
  * @param {number} transitionDuration - msec movement animation should take
  */
@@ -137,12 +147,12 @@ function drawCoordinates(coordinates, layer, cls='c', transitionDuration=750) {
 }
 
 export function drawFlowStations(stations, maxNegativeFlow, maxPositiveFlow) {
-  const color = (d) => d3.interpolatePuOr(.5 * Math.sign(d.numBikesDelta) + .5);
+  const color = (d) => calcColor(d.numBikesDelta);
   const maxFlow = Math.max(Math.abs(maxNegativeFlow), Math.abs(maxPositiveFlow), 1);
 
   const stationSelection = drawCoordinates(stations, stationLayer, 'station')
     .attr('r', d => {
-        return geoScale(2 + 10 * (Math.abs(d.numBikesDelta) / maxFlow) ** .5);
+        return calcSize(d.numBikesDelta, maxFlow);
       })
       // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
       // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
@@ -165,4 +175,54 @@ function addStationAnimation(stationSelection) {
     .attr("y2", map.latLngToLayerPoint(d.latlng).y)
     .attr('stroke', 'red')
   });
+}
+
+export function drawLegend(maxFlow, minFlow) {
+  const padding = 40;
+  const w = 300 + 2*padding;
+  const h = calcSize(maxFlow, maxFlow)*4 + 2*padding;
+  d3.select("#legend").attr("height", h + "px").attr("width", w + "px");
+  d3.select("#legend svg").attr("height", h + "px").attr("width", w + "px");
+
+  const cls = "legend-circle";
+  // const legendLayer = document.getElementById("legend").append("svg");
+  const vals = [maxFlow, (maxFlow+minFlow)/2, Math.max(minFlow, 1)];
+
+  const legendElts = [];
+  const labels = [];
+  for (let i = 0; i < 6; i++) {
+    let val = vals[i%3];
+    let color = (d) => calcColor(i%2 ? -val : val);
+    let row = i % 3;
+    let col = i % 2; 
+    let x = (w-2*padding)/4*(1+2*col) - 40; 
+    let y = (h-2*padding)/2*(1+2*row);
+    legendElts.push({id: i, val, color, x, y});
+    let text = val + " bikes " + (i%2 ? "removed" : "added");
+    labels.push({id: i, val, x, y, text});
+  }
+
+  const sel = legendLayer.selectAll(`circle.coordinate.${cls}`)
+    .data(legendElts, (d) => d.id )
+    .join("circle")
+      .attr('class', `coordinate ${cls}`)
+      .attr("transform", (d) => {
+        return "translate(" + d.x + "," + d.y + ")";
+      })
+      .attr('r', d => {
+          const r = calcSize(d.val, maxFlow);
+          return r;
+        })
+        // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
+        // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
+        .attr('fill', d => rgba(d.color(d.val), 0.2))
+        .attr('stroke', d => d.color(d.val));
+
+  const legendLabels = legendLayer.selectAll("text")
+    .data(labels, (d) => d.id)
+    .join("text")
+      .attr("transform", (d) => {
+        return "translate(" + (d.x + 15) + "," + (d.y + 5) + ")";
+      })
+      .text((d) => d.text);
 }
