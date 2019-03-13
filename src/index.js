@@ -1,5 +1,7 @@
 
 import 'leaflet/dist/leaflet.css'; // must be imported before leaflet.js
+import 'leaflet-draw/dist/leaflet.draw-src.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 import 'js-datepicker/dist/datepicker.min.css'
 import 'nouislider/distribute/nouislider.css';
 import './styles.css';

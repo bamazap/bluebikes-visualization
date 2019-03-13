@@ -1,4 +1,6 @@
 import * as L from 'leaflet';
+//import * as ld from 'leaflet-draw';
+import 'leaflet-draw';
 import * as d3 from 'd3';
 
 const token = 'pk.eyJ1IjoiYmFtYXphcCIsImEiOiJjanQ0amR6dHIxM3YxNDlsbDJxZXFoaTEwIn0.HXt22ulQoeU3Xq1T7fSTRg';
@@ -11,13 +13,57 @@ const map = L.map('map', {
   center: [42.3601, -71.0589],
   zoom: baseZoom,
   minZoom: 12,
+  //drawControl: true 
 });
+
 L.tileLayer(`https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={token}`, {
   attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
   maxZoom: 18,
   id: 'mapbox.streets',
   token,
 }).addTo(map);
+
+// var editableLayers = new L.FeatureGroup();
+// map.addLayer(editableLayers);
+
+console.log("adding drawing pane");
+ var drawnItems = new L.FeatureGroup();
+ map.addLayer(drawnItems);
+
+ var drawControl = new L.Control.Draw({
+     // edit: {
+     //     featureGroup: drawnItems
+     // }
+      draw: {
+       polygon: false,
+       marker: false, 
+       circle: false,
+       circlemarker: false,
+       polyline: false
+      },
+      edit: {
+        featureGroup: drawnItems
+      }
+ });
+ map.addControl(drawControl);
+
+ map.on(L.Draw.Event.DRAWSTART, function(e) {
+  console.log("edit start");
+    drawnItems.clearLayers();
+ });
+
+ map.on(L.Draw.Event.CREATED, function (e) {
+   //drawnItems.clearLayers();
+    var type = e.layerType,
+        layer = e.layer;
+
+    // if (type === 'marker') {
+    //     layer.bindPopup('A popup!');
+    // }
+
+    drawnItems.addLayer(layer);
+});
+
 // create an svg layer and get it with d3
 L.svg().addTo(map);
 const svg = d3.select('#map').select('svg').style('pointer-events', 'all');
