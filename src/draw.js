@@ -103,6 +103,7 @@ function geoCoordsToXY(d) {
 }
 
 const legendLayer = d3.select("#legend").append("svg").append("g").attr("class", "legend-layer");
+var legendSetup = false;
 
 // go from a latlng to pixel coordinates on the map
 function geoTranslate(d) {
@@ -240,11 +241,14 @@ function addStationAnimation(stationSelection) {
 }
 
 export function drawLegend(maxFlow, minFlow) {
+  let w, h;
   const padding = 40;
-  const w = 300 + 2*padding;
-  const h = calcSize(maxFlow, maxFlow)*4 + 2*padding;
-  d3.select("#legend").attr("height", h + "px").attr("width", w + "px");
-  d3.select("#legend svg").attr("height", h + "px").attr("width", w + "px");
+  if (!legendSetup) {
+    w = 300 + 2*padding;
+    h = calcSize(maxFlow, maxFlow)*4 + 2*padding;
+    d3.select("#legend").attr("height", h + "px").attr("width", w + "px");
+    d3.select("#legend svg").attr("height", h + "px").attr("width", w + "px");
+  }
 
   const cls = "legend-circle";
   // const legendLayer = document.getElementById("legend").append("svg");
@@ -257,19 +261,28 @@ export function drawLegend(maxFlow, minFlow) {
     let color = (d) => calcColor(i%2 ? -val : val);
     let row = i % 3;
     let col = i % 2; 
-    let x = (w-2*padding)/4*(1+2*col) - 40; 
-    let y = (h-2*padding)/2*(1+2*row);
+    let x, y;
+    if (!legendSetup) { // only place elements the first time you render it
+      x = (w-2*padding)/4*(1+2*col) - 40; 
+      y = (h-2*padding)/2*(1+2*row);
+    } else {
+      x = 0;
+      y = 0;
+    }
     legendElts.push({id: i, val, color, x, y});
     let text = val + " bikes " + (i%2 ? "removed" : "added");
     labels.push({id: i, val, x, y, text});
   }
 
+  legendSetup = true;
+
   const sel = legendLayer.selectAll(`circle.coordinate.${cls}`)
     .data(legendElts, (d) => d.id )
     .join("circle")
       .attr('class', `coordinate ${cls}`)
-      .attr("transform", (d) => {
-        return "translate(" + d.x + "," + d.y + ")";
+      .attr("transform", function(d) {
+        const oldTranslate = d3.select(this).attr('transform');
+        return oldTranslate ? oldTranslate : "translate(" + d.x + "," + d.y + ")";
       })
       .attr('r', d => {
           const r = calcSize(d.val, maxFlow);
@@ -283,8 +296,9 @@ export function drawLegend(maxFlow, minFlow) {
   const legendLabels = legendLayer.selectAll("text")
     .data(labels, (d) => d.id)
     .join("text")
-      .attr("transform", (d) => {
-        return "translate(" + (d.x + 15) + "," + (d.y + 5) + ")";
+      .attr("transform", function(d) {
+        const oldTranslate = d3.select(this).attr('transform');
+        return oldTranslate ? oldTranslate : "translate(" + (d.x + 15) + "," + (d.y + 5) + ")";
       })
       .text((d) => d.text);
 }
