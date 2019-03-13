@@ -19,7 +19,26 @@
   <main>
     <div id="map"></div>
     <div id="filter-options">
-      <h2 class="filter-option-header">Filter by dates</h2>
+      <div class="btn-group">
+        <button class="region-select-button" id="region-select">Select Stations</button>
+        <button class="region-select-button" id="region-clear">Clear Selection</button>
+      </div>
+      <div id="region-selection-options">
+        <label>
+          <input class="region-selection-option" type="radio" name="region-selection" value="incoming">
+          <span>Departures</span>
+        </label>
+        <label>
+          <input class="region-selection-option" type="radio" name="region-selection" value="outgoing">
+          <span>Arrivals</span>
+        </label>
+        <label>
+          <input class="region-selection-option" type="radio" name="region-selection" value="both" checked="true">
+          <span>All</span>
+        </label>
+      </div>
+
+      <h2 class="filter-option-header">Dates</h2>
       <div class="filter-date">
         <div>
           <h3 class="filter-option-subheader">Start date:</h3>
@@ -31,7 +50,7 @@
         </div>
       </div>
 
-      <h2 class="filter-option-header">Filter by day of the week</h2>
+      <h2 class="filter-option-header">Day of the week</h2>
       <div class="btn-group">
         <button value="0" class="week-button">Su</button>
         <button value="1" class="week-button">Mo</button>
@@ -42,19 +61,8 @@
         <button value="6" class="week-button">Sa</button>
       </div>
 
-      <h2 class="filter-option-header">Filter by time of day</h2>
+      <h2 class="filter-option-header">Time of day</h2>
       <div id="time-slider"></div><br>
-
-      <h2 class="filter-option-header">Filter by area</h2>
-        <div class="btn-group">
-          <button class="region-select-button" id="region-select">Select Region</button>
-          <button class="region-select-button" id="region-clear">Clear Selection</button><br>
-        </div>
-        <div id="region-selection-options">
-          <input class="region-selection-option" type="radio" name="region-selection" value="incoming"><span>Incoming</span><br>
-          <input class="region-selection-option" type="radio" name="region-selection" value="outgoing"><span>Outgoing</span><br>
-          <input class="region-selection-option" type="radio" name="region-selection" value="both" checked="true"><span>Both</span><br>
-        </div>
 
       <h2 class="filter-option-header">Legend</h2>
       <div id="legend"></div><br>
