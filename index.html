@@ -43,7 +43,18 @@
       </div>
 
       <h2 class="filter-option-header">Filter by time of day</h2>
-      <div id="time-slider"></div>  
+      <div id="time-slider"></div><br>
+
+      <h2 class="filter-option-header">Filter by area</h2>
+        <div class="btn-group">
+          <button class="region-select-button" id="region-select">Select Region</button>
+          <button class="region-select-button" id="region-clear">Clear Selection</button><br>
+        </div>
+        <div id="region-selection-options">
+          <input class="region-selection-option" type="radio" name="region-selection" value="incoming"><span>Incoming</span><br>
+          <input class="region-selection-option" type="radio" name="region-selection" value="outgoing"><span>Outgoing</span><br>
+          <input class="region-selection-option" type="radio" name="region-selection" value="both" checked="true"><span>Both</span><br>
+        </div>
     </div>
   </main>
   <script src="dist/bundle.js"></script>

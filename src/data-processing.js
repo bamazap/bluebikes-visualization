@@ -8,7 +8,7 @@ import * as L from 'leaflet';
  *   e.g. within a time range, only for mondays, etc.
  *   and returns a promise that resolves once it is done
  */
-export async function stationsInTimeIntervalAndRegion(bbData, iterator, region) {
+export async function stationsInTimeIntervalAndRegion(bbData, iterator, region, regionSelectMode) {
   // an object for every station to use in the draw functions
   const stations = {};
   Object.entries(bbData.stations).forEach(([id, { latitude, longitude }]) => {
@@ -27,13 +27,17 @@ export async function stationsInTimeIntervalAndRegion(bbData, iterator, region) 
   // ONLY consider trips that END in the desired region
   await iterator(bbData, (timestepData) => {
     Object.entries(timestepData).forEach(([sID, targets]) => {
-      Object.entries(targets).forEach(([tID, delta]) => {
-        if (stations[tID].inRegion) {
-          stations[sID].numBikesOut += delta;
-          stations[sID].targets[tID] = (stations[sID].targets[tID] || 0) + delta;
-          stations[tID].numBikesIn += delta;
-          stations[tID].sources[sID] = (stations[tID].sources[sID] || 0) + delta;
+        if ((regionSelectMode == "both" || regionSelectMode == "outgoing") && !stations[sID].inRegion) {
+          return;
         }
+      Object.entries(targets).forEach(([tID, delta]) => {
+        if ((regionSelectMode == "both" || regionSelectMode == "incoming") && !stations[tID].inRegion) {
+          return;
+        }
+        stations[sID].numBikesOut += delta;
+        stations[sID].targets[tID] = (stations[sID].targets[tID] || 0) + delta;
+        stations[tID].numBikesIn += delta;
+        stations[tID].sources[sID] = (stations[tID].sources[sID] || 0) + delta;
       });
     });
   });

@@ -13,7 +13,7 @@ import setUpFilters from './filters';
 
 async function draw(bbData, filterOptions) {
   const iterator = makeTimeIntervalIterator(filterOptions);
-  const stationPoints = await stationsInTimeIntervalAndRegion(bbData, iterator, filterOptions.region);
+  const stationPoints = await stationsInTimeIntervalAndRegion(bbData, iterator, filterOptions.region, filterOptions.regionSelectMode);
   //const stationPoints = stationsInRegion(stationPointsFilteredTime, filterOptions.region);
   let minFlow = 0;
   let maxFlow = 0;
@@ -27,7 +27,6 @@ async function draw(bbData, filterOptions) {
 async function main() {
   document.querySelector('body').style = '';
   const bbData = await getBlueBikesData();
-  console.log("bbData", bbData);
   setUpFilters((filterOptions) => {
     draw(bbData, filterOptions);
   });

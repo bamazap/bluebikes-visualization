@@ -78,6 +78,12 @@ main {
 	background: #42b0f4 !important;
 }
 
+.btn-group {
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .btn-group button {
   background-color: #42b0f4; /* Green background */
   border: 1px solid #4186f4; /* Green border */
@@ -105,4 +111,18 @@ main {
 /* Leaflet boxes */
 path.leaflet-interactive {
   fill: none;
+}
+
+#region-selection-options span {
+  color: white;
+  font-family: Helvetica, Arial, 'Droid Sans', sans-serif;
+  font-size:20px;
+}
+
+.leaflet-draw {
+  display: none;
+}
+
+.region-select-button {
+  margin-bottom:20px;
 }

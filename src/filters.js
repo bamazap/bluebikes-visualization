@@ -21,6 +21,7 @@ export default function setUpFilters(onChange) {
     maxTime: 24,
     days: new Set(),
     region: null, // a Leaflet LatLng object describing the selected square, falsy if nothing selected
+    regionSelectMode: "both"
   };
 
   // day filters 
@@ -100,4 +101,15 @@ export default function setUpFilters(onChange) {
     onChange(filterOptions);
   }
   setChangeAreaCallback(onChangeArea);
+
+  // region mode selection
+  Array.from(document.getElementsByClassName("region-selection-option")).forEach((elt) => {
+    elt.onclick = () => {
+      if (filterOptions.regionSelectMode != elt.value) {
+        filterOptions.regionSelectMode = elt.value;
+        onChange(filterOptions);
+      }
+    };
+  });
+
 }

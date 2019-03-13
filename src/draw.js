@@ -61,11 +61,18 @@ map.on(L.Draw.Event.CREATED, function (e) {
   changeAreaCallback(layer.getBounds());
 });
 
-map.on(L.Draw.Event.DELETESTOP, function(e) {
-  console.log("clear location filters");
-  changeAreaCallback(null);
-});
+document.getElementById("region-select").onclick = () => {
+  // const rect = new L.Draw.Rectangle();
+  // rect.initialize();
+  document.getElementsByClassName("leaflet-draw-draw-rectangle")[0].click();
+}
 
+document.getElementById("region-clear").onclick = () => {
+  // const rect = new L.Draw.Rectangle();
+  // rect.initialize();
+  drawnItems.clearLayers();
+  changeAreaCallback(null);
+}
 
 
 // create an svg layer and get it with d3
