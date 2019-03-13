@@ -48,7 +48,7 @@ main {
   margin-right: 16px;
   flex: 1;
   height: 100%;
-  min-width: 80vh;
+  min-width: 500px;
 }
 
 .filter-option-header {
@@ -56,7 +56,16 @@ main {
 }
 
 .filter-option-subheader {
-	color:white;
+	color:lightgray;
+}
+
+.filter-date {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filter-date h3 {
+  margin-top: 0;
 }
 
 #time-slider {
@@ -66,11 +75,7 @@ main {
 }
 
 .noUi-connect {
-	background: #42b0f4;
-}
-
-.btn-groupo {
-	max-width: 500px;
+	background: #42b0f4 !important;
 }
 
 .btn-group button {
@@ -92,11 +97,6 @@ main {
   clear: both;
   display: table;
 }
-
-/* Add a background color on hover 
-.btn-group button:hover {
-  background-color: #419af4;
-}*/
 
 .btn-group button.selected {
 	background-color: #0581ff;
