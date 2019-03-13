@@ -139,6 +139,9 @@ map.on('zoomend', () => {
     coordinateSelection.attr('r', function() {
       return parseFloat(d3.select(this).attr('r')) * scale;
     });
+    legendLayer.selectAll('circle').attr('r', function() {
+      return parseFloat(d3.select(this).attr('r')) * scale;
+    });
     lastZoom = newZoom;
   }
 });
