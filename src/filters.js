@@ -34,6 +34,10 @@ export default function setUpFilters(onChange) {
       instance.setMin(date);
       filterOptions.minDate = new Date(date.getTime() - timezoneOffset);
       onChange(filterOptions);
+    },
+    formatter: (input, date) => {
+      const value = date.toLocaleDateString()
+      input.value = value // => '1/1/2099'
     }
   });
   datepicker("#endpicker", {
@@ -46,7 +50,12 @@ export default function setUpFilters(onChange) {
       instance.setMax(date);
       filterOptions.maxDate = new Date(date.getTime() - timezoneOffset);
       onChange(filterOptions);
-    }
+    },
+    formatter: (input, date) => {
+      const value = date.toLocaleDateString()
+      input.value = value // => '1/1/2099'
+    },
+    position: 'br'
   });
 
   // day of week filters 
