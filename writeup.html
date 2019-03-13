@@ -1,1 +1,34 @@
-<h1>Assignment write-up</h1>
+<h1>A3 write-up</h1>
+<h3>Barry McNamara and Anelise Newman</h3>
+
+<h2>Design Rationale</h2>
+
+This visualization explores the <a href="https://s3.amazonaws.com/hubway-data/index.html">Blue Bikes Dataset</a> of bicycle trips that occurred on the Hubway/Blue Bikes system from 2015-2018. We wanted to create a system to answer two main questions: How do bikes flow around different parts of the city? And how do patterns of Blue Bike usage change at different times? 
+
+<h3>Data encodings</h3>
+
+<p>We considered several different techniques for how to visualize the flow and distribution of bikes around Boston. One of our first ideas was to create an animation where bikes were represented by small moving dots and you could actually watch the trajectories of one or many bikes as they moved throughout the day. While prototyping, we quickly realized that this was not a perceptually effective way to demonstrate the data, because with even a day's worth of bike trips, the visualization quickly became too chaotic to easily intuit what was going on and too transient to explore hypotheses about the data. We then considered something similar to FaceBook's "Visualizing Friendships" visualization, which used translucent links between nodes to suggest the topology of a graph. However, when applied to the smaller Blue Bikes system, we found that this approach had a lot of the same problems as the previous approach--it looked chaotic and it was hard to pick out individual data points. We realized that explicitly visualizing the connections between stations would be difficult because of the density of information and also because of the challenges of representing a two-way flow.
+</p>
+
+<p>We realized that explicitly visualizing the connections between stations would be difficult because of the density of information and also because of the challenges of representing a two-way flow, but we still wanted people to explore the flows of bikes around the city. Ultimately, we decided to encode information about bike flow at the nodes and to create interaction methods that allowed for exploring flow of bikes in a more controlled way.</p>
+
+<p>In our visualization, size of the nodes encodes net flow of bikes into or out of the station during the time range specified. The color of the node indicates if bikes net left or entered the station. Thus, areas of more color indicate higher net flows of bikes, and the specific color can be used to to tell the direction of that flow. 
+</p>
+
+<h3>Interaction techniques</h3>
+
+<p>In terms of interactions, one of the main goals of this visualization was to allow people to observe how people's bike commuting patterns change at different times, whether that be at different hours, seasons, or years. As such, we provide fairly fine-grained controls to explore these trends. People can select certain times of day (to explore the effects of rush hour on bike traffice, for instance), certain days of the week (perhaps to compare weekends to weekdays), certain times of year (to see how ridership changes in winter versus summer), or even spans of multiple years (perhaps to see if ridership has changed over time).
+</p>
+
+<p>Another goal we hoped to solve with interactions was letting people explore connections that existed between different parts of the city that we chose not to explicitly visualize. We implemented this by letting the user drag to select a subset of the stations in the city. They can then filter by rides that enter that region, exit it, or both. In this way, it is possible to answer questions like: where are people commuting to MIT during morning rush hour coming from? It is even possible to drill down on a single station in this way to see where bikes from that station have ended up.
+</p>
+
+<p>We provide the station names using tooltips that appear on hover according to a Voronoi diagram, so that we don't clutter our map with all the station names, but it is still relatively easy to hover over a station and see its name.</p>
+
+<p>One design trade-off that we had to make given the interactive nature of the design was deciding if the size of the dots representing the stations should be scaled based on the current data selection or not. The downside was that this could obscure changes in overall ridership at different times of the day or year, but the upside is that keeping dots in a comfortable size range would make it easier to visualize relative flows throughout the city at any given point. We decided to do the normalization because we though that the fine-grained location data was richer and more interesting than the single number of overall ridership. Furthermore, we provide to the user an interactive legend that specifies number of bikes represented by a certain size circle at any given time, so that the user still has a way of seeing how much overall ridership fluctuates.</p>
+
+<h2>Development Process</h2>
+
+We started by working together to prototype a bunch of different ideas for how to visualize the data. Once we decided on an encoding, we broke up the work into different aspects. Barry worked on plotting the stations with the correct encoding, loading in the data, and creating the Voronoi tooltip. Anelise worked on filtering by time and station location and the interactive legend. 
+
+Together, we spent roughly 65 hours on the assignment. Probably the most time-consuming aspect was deciding what visual encodings were going to use. We spent a significant amount of time prototyping designs that ended up being nonintuitive or just didn't look particularly good before settling on a final design.
