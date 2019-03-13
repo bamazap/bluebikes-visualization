@@ -130,3 +130,7 @@ path.leaflet-interactive {
 #legend {
   background-color: white;  
 }
+
+a {
+  color: white;
+}
