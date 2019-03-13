@@ -261,10 +261,11 @@ function addStationAnimation(stationSelection) {
 
 export function drawLegend(maxFlow, minFlow) {
   let w, h;
-  const padding = 40;
+  const xpadding = 20;
+  const ypadding = 40;
   if (!legendSetup) {
-    w = 300 + 2*padding;
-    h = calcSize(maxFlow, maxFlow)*4 + 2*padding;
+    w = 300 + 2*xpadding;
+    h = calcSize(maxFlow, maxFlow)*4 + 2*ypadding;
     d3.select("#legend").attr("height", h + "px").attr("width", w + "px");
     d3.select("#legend svg").attr("height", h + "px").attr("width", w + "px");
   }
@@ -277,47 +278,79 @@ export function drawLegend(maxFlow, minFlow) {
   const labels = [];
   for (let i = 0; i < 6; i++) {
     let val = vals[i%3];
-    let color = (d) => calcColor(i%2 ? -val : val);
+    let color = () => calcColor(i%2 ? -val : val);
     let row = i % 3;
     let col = i % 2; 
     let x, y;
     if (!legendSetup) { // only place elements the first time you render it
-      x = (w-2*padding)/4*(1+2*col) - 40; 
-      y = (h-2*padding)/2*(1+2*row);
+      x = (w-2*xpadding)/5*(1+3*col) - 30; 
+      y = (h-2*ypadding)/2*(1+2*row);
     } else {
       x = 0;
       y = 0;
     }
     legendElts.push({id: i, val, color, x, y});
-    let text = val + " bikes " + (i%2 ? "removed" : "added");
+    let text = val + " bikes " + (i%2 ? "arrived" : "departed");
     labels.push({id: i, val, x, y, text});
   }
 
   legendSetup = true;
 
-  const sel = legendLayer.selectAll(`circle.coordinate.${cls}`)
+  legendLayer.selectAll(`circle.coordinate.legend-background`)
     .data(legendElts, (d) => d.id )
     .join("circle")
-      .attr('class', `coordinate ${cls}`)
-      .attr("transform", function(d) {
-        const oldTranslate = d3.select(this).attr('transform');
-        return oldTranslate ? oldTranslate : "translate(" + d.x + "," + d.y + ")";
-      })
-      .attr('r', d => {
-          const r = calcSize(d.val, maxFlow);
-          return r;
-        })
-        // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
-        // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
-        .attr('fill', d => rgba(d.color(d.val), 0.2))
-        .attr('stroke', d => d.color(d.val));
+    .attr('class', `coordinate legend-background`)
+    .attr("transform", function(d) {
+      const oldTranslate = d3.select(this).attr('transform');
+      return oldTranslate ? oldTranslate : "translate(" + d.x + "," + d.y + ")";
+    })
+    .attr('r', d => {
+      const r = calcSize(d.val, maxFlow);
+      return r;
+    })
+    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
+    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
+    .attr('opacity', 0.7)
+    .attr('fill', 'white')
+    .attr('stroke', 'white');
 
-  const legendLabels = legendLayer.selectAll("text")
+  legendLayer.selectAll(`circle.coordinate.legend-center`)
+    .data(legendElts, (d) => d.id )
+    .join("circle")
+    .attr('class', `coordinate legend-center`)
+    .attr("transform", function(d) {
+      const oldTranslate = d3.select(this).attr('transform');
+      return oldTranslate ? oldTranslate : "translate(" + d.x + "," + d.y + ")";
+    })
+    .attr('r', 1)
+    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
+    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
+    .attr('fill', d => d.color(d.val))
+    .attr('stroke', d => d.color(d.val));
+
+  legendLayer.selectAll(`circle.coordinate.${cls}`)
+    .data(legendElts, (d) => d.id )
+    .join("circle")
+    .attr('class', `coordinate ${cls}`)
+    .attr("transform", function(d) {
+      const oldTranslate = d3.select(this).attr('transform');
+      return oldTranslate ? oldTranslate : "translate(" + d.x + "," + d.y + ")";
+    })
+    .attr('r', d => {
+      const r = calcSize(d.val, maxFlow);
+      return r;
+    })
+    // .attr('r', d => 2 + 10 * (Math.max(d.numBikesDelta, 0) / maxFlow) ** .5) // positive
+    // .attr('r', d => 2 + 10 * (Math.max(-1 * d.numBikesDelta, 0) / maxFlow) ** .5) // negative
+    .attr('fill', d => rgba(d.color(d.val), 0.2))
+    .attr('stroke', d => d.color(d.val));
+
+  legendLayer.selectAll("text")
     .data(labels, (d) => d.id)
     .join("text")
-      .attr("transform", function(d) {
-        const oldTranslate = d3.select(this).attr('transform');
-        return oldTranslate ? oldTranslate : "translate(" + (d.x + 15) + "," + (d.y + 5) + ")";
-      })
-      .text((d) => d.text);
+    .attr("transform", function(d) {
+      const oldTranslate = d3.select(this).attr('transform');
+      return oldTranslate ? oldTranslate : "translate(" + (d.x + 15) + "," + (d.y + 5) + ")";
+    })
+    .text((d) => d.text);
 }
