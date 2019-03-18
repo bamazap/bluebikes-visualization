@@ -261,7 +261,7 @@ function addStationAnimation(stationSelection) {
 
 export function drawLegend(maxFlow, minFlow) {
   let w, h;
-  const xpadding = 20;
+  const xpadding = 25;
   const ypadding = 40;
   if (!legendSetup) {
     w = 300 + 2*xpadding;
