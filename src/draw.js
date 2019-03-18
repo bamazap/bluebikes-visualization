@@ -290,7 +290,7 @@ export function drawLegend(maxFlow, minFlow) {
       y = 0;
     }
     legendElts.push({id: i, val, color, x, y});
-    let text = val + " bikes " + (i%2 ? "arrived" : "departed");
+    let text = val + " bikes " + (i%2 ? "departed" : "arrived");
     labels.push({id: i, val, x, y, text});
   }
 
